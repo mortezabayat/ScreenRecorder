@@ -12,7 +12,10 @@ import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Toast;
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 public class UiService extends Service {
     HUDView mView;
 

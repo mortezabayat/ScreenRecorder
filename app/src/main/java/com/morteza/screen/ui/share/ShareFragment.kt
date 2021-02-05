@@ -9,7 +9,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.morteza.screen.R
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 class ShareFragment : Fragment() {
 
     private lateinit var shareViewModel: ShareViewModel

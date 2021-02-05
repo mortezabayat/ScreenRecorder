@@ -33,7 +33,10 @@ import com.morteza.screen.ui.floatingcircularmenu.FloatingCircularMenuService.Co
 import com.morteza.screen.ui.floatingcircularmenu.FloatingCircularMenuService.Companion.mMediaProjectionManager
 import com.morteza.screen.ui.floatingcircularmenu.FloatingCircularMenuService.Companion.mProjectionCallback
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration

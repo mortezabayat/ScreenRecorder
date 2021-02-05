@@ -19,7 +19,10 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.morteza.screen.R;
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 public final class OverlayService extends Service {
 
     private static final int LayoutParamFlags = WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH

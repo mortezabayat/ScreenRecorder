@@ -17,9 +17,9 @@ import androidx.fragment.app.Fragment
 import com.morteza.screen.R
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager
 import kotlinx.android.synthetic.main.fragment_floating_menu.*
-
 /**
- * A simple [Fragment] subclass.
+ * @author Morteza
+ * @version 2019/12/3
  */
 class FloatingCircularMenuFragment : Fragment() {
 

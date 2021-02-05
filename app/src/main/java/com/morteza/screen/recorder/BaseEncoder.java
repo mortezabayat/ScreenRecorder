@@ -1,20 +1,4 @@
-/*
- * Copyright (c) 2017 Yrom Wang <http://www.yrom.net>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.morteza.screen.recorder1;
+package com.morteza.screen.recorder;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -24,10 +8,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
-
 /**
- * @author yrom
- * @version 2017/12/4
+ * @author Morteza
+ * @version 2019/12/3
  */
 abstract class BaseEncoder implements Encoder {
     static abstract class Callback implements Encoder.Callback {

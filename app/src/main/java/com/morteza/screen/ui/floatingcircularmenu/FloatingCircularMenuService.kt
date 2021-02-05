@@ -39,7 +39,7 @@ import androidx.core.view.forEachIndexed
 import androidx.core.view.isGone
 import com.morteza.screen.BuildConfig
 import com.morteza.screen.R
-import com.morteza.screen.recorder1.*
+import com.morteza.screen.recorder.*
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager
 import java.io.File
@@ -48,7 +48,10 @@ import java.util.*
 import kotlin.math.cos
 import kotlin.math.sin
 
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 class FloatingCircularMenuService : Service(), FloatingViewListener {
 
     private val windowManger by lazy {
