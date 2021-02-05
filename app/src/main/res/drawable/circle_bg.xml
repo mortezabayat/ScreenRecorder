@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <size
+        android:width="@dimen/floating_icon_size"
+        android:height="@dimen/floating_icon_size" />
+    <solid android:color="@android:color/white" />
+    <!--<padding
+        android:top="4dp"
+        android:bottom="4dp"
+        android:right="4dp"
+        android:left="4dp"/>-->
+</shape>

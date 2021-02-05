@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
+    android:background="#6A1E1D1D"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/btnClose"
+        style="@style/CircleMainButtonStyle"
+        android:src="@drawable/ic_add"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/start_record_btn"
+        style="@style/CircleReadButtonStyle"
+        android:src="@drawable/ic_circle_record"
+        android:visibility="gone"
+        app:layout_constraintCircle="@+id/btnClose"
+        app:layout_constraintCircleAngle="165"
+        app:layout_constraintCircleRadius="0dp"
+        tools:ignore="MissingConstraints" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/tools_btn"
+        android:src="@drawable/ic_build_circle"
+        style="@style/CircleButtonStyle"
+        android:visibility="gone"
+        app:layout_constraintCircle="@+id/btnClose"
+        app:layout_constraintCircleAngle="115"
+        app:layout_constraintCircleRadius="0dp"
+        tools:ignore="MissingConstraints" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/home_btn"
+        android:src="@drawable/ic_home"
+        style="@style/CircleButtonStyle"
+        android:visibility="gone"
+        app:layout_constraintCircle="@+id/btnClose"
+        app:layout_constraintCircleAngle="65"
+        app:layout_constraintCircleRadius="0dp"
+        tools:ignore="MissingConstraints" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/settings_btn"
+        style="@style/CircleButtonStyle"
+        android:src="@drawable/ic_settings"
+        android:visibility="gone"
+        app:layout_constraintCircle="@+id/btnClose"
+        app:layout_constraintCircleAngle="15"
+        app:layout_constraintCircleRadius="0dp"
+        tools:ignore="MissingConstraints" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

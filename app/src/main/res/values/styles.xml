@@ -1,0 +1,47 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="CircleButtonStyle">
+        <item name="android:layout_width">@dimen/floating_icon_size</item>
+        <item name="android:layout_height">@dimen/floating_icon_size</item>
+        <item name="android:padding">4dp</item>
+        <item name="android:background">@drawable/circle_bg</item>
+        <item name="tint">@color/colorAccent</item>
+        <item name="android:elevation">6dp</item>
+        <item name="android:outlineProvider">paddedBounds</item>
+    </style>
+    <style name="CircleReadButtonStyle">
+        <item name="android:layout_width">@dimen/floating_icon_size</item>
+        <item name="android:layout_height">@dimen/floating_icon_size</item>
+        <item name="android:padding">4dp</item>
+        <item name="android:background">@drawable/circle_bg</item>
+        <item name="tint">@android:color/holo_red_dark</item>
+        <item name="android:elevation">6dp</item>
+        <item name="android:outlineProvider">paddedBounds</item>
+    </style>
+    <style name="CircleMainButtonStyle">
+        <item name="android:layout_width">@dimen/floating_main_icon_size</item>
+        <item name="android:layout_height">@dimen/floating_main_icon_size</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:background">@drawable/circle_floating_button_bg</item>
+        <item name="tint">@android:color/white</item>
+        <item name="android:elevation">6dp</item>
+        <item name="android:outlineProvider">paddedBounds</item>
+    </style>
+</resources>
