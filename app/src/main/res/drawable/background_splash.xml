@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:drawable="@drawable/circle_floating_button_bg"/>
+
+    <item  android:gravity="center"
+        android:width="200sp"
+        android:height="200sp"
+        android:drawable="@drawable/ic_launcher_foreground">
+    </item>
+
+</layer-list>

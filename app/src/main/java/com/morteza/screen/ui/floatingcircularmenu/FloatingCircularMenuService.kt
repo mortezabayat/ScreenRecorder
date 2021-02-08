@@ -111,6 +111,9 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         TODO("Return the communication channel to the service.")
     }
 
+    override fun onCreate() {
+        super.onCreate()
+    }
     /**
      * Print information of all MediaCodec on this device.
      */
@@ -158,19 +161,19 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     }
 
     @SuppressLint("InflateParams")
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         if (!isViewAddToWindomanager) {
 
             mNotifications = Notifications(applicationContext)
 
             Utils.findEncodersByTypeAsync(
                 ScreenRecorder.VIDEO_AVC,
-                Utils.Callback { infos: Array<MediaCodecInfo> ->
+                Utils.Callback { info_s: Array<MediaCodecInfo> ->
                     logCodecInfos(
-                        infos,
+                        info_s,
                         ScreenRecorder.VIDEO_AVC
                     )
-                    mAvcCodecInfos = infos
+                    mAvcCodecInfos = info_s
                 }
             )
             Utils.findEncodersByTypeAsync(
@@ -196,7 +199,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         return START_NOT_STICKY
     }
 
-    private fun initFloatingView(intent: Intent?) {
+    private fun initFloatingView(intent: Intent) {
         windowManger.defaultDisplay.getMetrics(metrics)
 
         val inflater = LayoutInflater.from(this)
@@ -206,10 +209,12 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
             closeOpenCircleMenu()
         }
 
+
+        val rect = intent.getParcelableExtra<Rect>(EXTRA_CUTOUT_SAFE_AREA)
         floatingViewManager = FloatingViewManager(this, this).apply {
             setFixedTrashIconImage(R.drawable.ic_trash_fixed)
             setActionTrashIconImage(R.drawable.ic_trash_action)
-            setSafeInsetRect(intent!!.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA) as Rect)
+            setSafeInsetRect(rect)
 
             val options = FloatingViewManager.Options().apply {
                 moveDirection = FloatingViewManager.MOVE_DIRECTION_THROWN
@@ -420,16 +425,31 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
 
         constraintSetLTR.apply {
             clone(circularMenu)
-            connect(R.id.btnClose, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START)
+            connect(
+                R.id.btnClose,
+                ConstraintSet.START,
+                ConstraintSet.PARENT_ID,
+                ConstraintSet.START
+            )
             connect(R.id.btnClose, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-            connect(R.id.btnClose, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
+            connect(
+                R.id.btnClose,
+                ConstraintSet.BOTTOM,
+                ConstraintSet.PARENT_ID,
+                ConstraintSet.BOTTOM
+            )
         }
 
         constraintSetRTL.apply {
             clone(circularMenu)
             connect(R.id.btnClose, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
             connect(R.id.btnClose, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-            connect(R.id.btnClose, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
+            connect(
+                R.id.btnClose,
+                ConstraintSet.BOTTOM,
+                ConstraintSet.PARENT_ID,
+                ConstraintSet.BOTTOM
+            )
         }
 
         flatAppBtn = circularMenu.findViewById(R.id.btnClose)
@@ -493,7 +513,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
 
         circularMenuParams = WindowManager.LayoutParams(
             /*radius + actionButtonSize*/ViewGroup.LayoutParams.MATCH_PARENT,
-            /*2 * radius + actionButtonSize*/ViewGroup.LayoutParams.MATCH_PARENT ,
+            /*2 * radius + actionButtonSize*/ViewGroup.LayoutParams.MATCH_PARENT,
             type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
@@ -716,7 +736,6 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         }.build()
     }
 
-
     private fun stopRecorder() {
         mNotifications?.clear()
 
@@ -783,8 +802,10 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
 
         @JvmStatic
         private var isViewAddToWindomanager = false
+
         @JvmStatic
         var mMediaProjectionManager: MediaProjectionManager? = null
+
         @JvmStatic
         var mMediaProjection: MediaProjection? = null
 
