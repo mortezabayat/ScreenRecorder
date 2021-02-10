@@ -1,14 +1,11 @@
 package com.morteza.screen.common;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AppCompatActivity;
 
 
-abstract public class BaseActivity extends FragmentActivity {
+abstract public class BaseActivity extends AppCompatActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

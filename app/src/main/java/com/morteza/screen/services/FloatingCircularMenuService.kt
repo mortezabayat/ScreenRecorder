@@ -1,4 +1,4 @@
-package com.morteza.screen.ui.floatingcircularmenu
+package com.morteza.screen.services
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -17,12 +17,8 @@ import android.media.MediaCodecInfo
 import android.media.MediaCodecInfo.CodecCapabilities
 import android.media.MediaCodecList
 import android.media.projection.MediaProjection
-import android.media.projection.MediaProjectionManager
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.os.IBinder
-import android.os.StrictMode
+import android.os.*
 import android.os.StrictMode.VmPolicy
 import android.util.DisplayMetrics
 import android.util.Log
@@ -39,6 +35,8 @@ import androidx.core.view.forEachIndexed
 import androidx.core.view.isGone
 import com.morteza.screen.BuildConfig
 import com.morteza.screen.R
+import com.morteza.screen.ScreenApp
+import com.morteza.screen.common.Constants
 import com.morteza.screen.recorder.*
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager
@@ -59,61 +57,66 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     }
 
     private var circularMenuParams: WindowManager.LayoutParams? = null
-
-    private lateinit var actionButton: AppCompatImageView
-
+    private var actionButton: AppCompatImageView? = null
     private lateinit var circularMenu: ConstraintLayout
     private lateinit var flatAppBtn: AppCompatImageView
-
     private lateinit var toolsBtn: AppCompatImageView
     private lateinit var startRecordBtn: AppCompatImageView
     private lateinit var settingsBtn: AppCompatImageView
     private lateinit var homeBtn: AppCompatImageView
-
     private val constraintSetRTL = ConstraintSet()
     private val constraintSetLTR = ConstraintSet()
-
-    private val radius by lazy {
-        resources.getDimensionPixelSize(R.dimen.radius)
-    }
-
-    private val actionButtonSize by lazy {
-        resources.getDimensionPixelSize(R.dimen.floating_icon_size)
-    }
-
+    private val radius by lazy { resources.getDimensionPixelSize(R.dimen.radius) }
+    private val actionButtonSize by lazy { resources.getDimensionPixelSize(R.dimen.floating_icon_size) }
     private lateinit var gestureDetector: GestureDetector
-
     private var isHideCircularMenu = true
-
     private val metrics = DisplayMetrics()
-
     private var floatingViewManager: FloatingViewManager? = null
-
     private var xPosition: Int = 0
     private var yPosition: Int = 0
-
-
     private var mRecorder: ScreenRecorder? = null
     private var mVirtualDisplay: VirtualDisplay? = null
-    private var mAvcCodecInfos // avc codecs
-            : Array<MediaCodecInfo> = emptyArray()
-    private var mAacCodecInfos // aac codecs
-            : Array<MediaCodecInfo> = emptyArray()
+    private var mAvcCodecInfos: Array<MediaCodecInfo> = emptyArray()
+    private var mAacCodecInfos: Array<MediaCodecInfo> = emptyArray()
     private var mNotifications: Notifications? = null
-
-    private val overMargin by lazy {
-        (2 * metrics.density).toInt()
-    }
-
+    private val overMargin by lazy { (2 * metrics.density).toInt() }
     private val isMoveToEdge = true // For FloatingViewManager.MOVE_DIRECTION_THROWN
 
-    override fun onBind(intent: Intent): IBinder {
-        TODO("Return the communication channel to the service.")
+    /**
+     * Handler of incoming messages from clients.
+     */
+    internal class IncomingHandler(context: Context, private val ss: FloatingCircularMenuService) :
+        Handler() {
+        private val applicationContext: Context = context.applicationContext
+
+        override fun handleMessage(msg: Message) {
+            when (msg.what) {
+                Constants.START_VIDEO_RECORDER -> {
+                    ss.startCapturing()
+                    Toast.makeText(applicationContext, "START_VIDEO_RECORDER !", Toast.LENGTH_SHORT)
+                        .show()
+
+                }
+                else -> super.handleMessage(msg)
+            }
+        }
     }
 
-    override fun onCreate() {
-        super.onCreate()
+    /**
+     * Target we publish for clients to send messages to IncomingHandler.
+     */
+    var mMessenger: Messenger? = null
+
+    /**
+     * When binding to the service, we return an interface to our messenger
+     * for sending messages to the service.
+     */
+    override fun onBind(intent: Intent): IBinder {
+        Toast.makeText(applicationContext, "binding", Toast.LENGTH_SHORT).show()
+        mMessenger = Messenger(IncomingHandler(this, this))
+        return mMessenger!!.binder
     }
+
     /**
      * Print information of all MediaCodec on this device.
      */
@@ -156,16 +159,16 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
                     .append("\n Bit Rates: ").append(audioCaps.bitrateRange)
                     .append("\n Max channels: ").append(audioCaps.maxInputChannelCount)
             }
-            Log.i("@@@", builder.toString())
+            Log.i(TAG, builder.toString())
         }
     }
 
     @SuppressLint("InflateParams")
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        //startForeground(1361, createNotification(this))
+
+        mNotifications = Notifications(this)
         if (!isViewAddToWindomanager) {
-
-            mNotifications = Notifications(applicationContext)
-
             Utils.findEncodersByTypeAsync(
                 ScreenRecorder.VIDEO_AVC,
                 Utils.Callback { info_s: Array<MediaCodecInfo> ->
@@ -196,16 +199,15 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         } else {
             closeOpenCircleMenu()
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun initFloatingView(intent: Intent) {
         windowManger.defaultDisplay.getMetrics(metrics)
-
         val inflater = LayoutInflater.from(this)
         actionButton =
             inflater.inflate(R.layout.floating_action_button, null, false) as AppCompatImageView
-        actionButton.setOnClickListener {
+        actionButton?.setOnClickListener {
             closeOpenCircleMenu()
         }
 
@@ -224,8 +226,9 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
                 isTrashViewEnabled = false
                 setDisplayMode(FloatingViewManager.DISPLAY_MODE_SHOW_ALWAYS)
             }
-
-            addViewToWindow(actionButton, options)
+            actionButton?.let {
+                addViewToWindow(it, options)
+            }
         }
     }
 
@@ -325,18 +328,21 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         )
     }
 
-    private fun startCapturing(mediaProjection: MediaProjection) {
+    fun startCapturing() {
+
+        val mediaProjection = ScreenApp.getMediaProjection()
+
+        mediaProjection?.registerCallback(mProjectionCallback,null);
+
         val video: VideoEncodeConfig = createVideoConfig()
 //        val audio: AudioEncodeConfig = createAudioConfig() // audio can be null
-//        if (video == null) {
-//            toast(getString(R.string.create_screenRecorder_failure))
-//            return
-//        }
-        val dir = getSavingDir()
 
+        val dir = getSavingDir()
 
         if (!dir!!.exists() && !dir.mkdirs()) {
             //cancelRecorder()
+            Log.e(TAG, "Create recorder with [dir!!.exists()]:$video")
+
             return
         }
         val format =
@@ -345,11 +351,9 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
             dir, "Screenshots-" + format.format(Date())
                     + "-" + video.width + "x" + video.height + ".mp4"
         )
-        Log.d("@@", "Create recorder with :$video \n \n $file")
+        Log.e(TAG, "Create recorder with :$video \n \n $file")
         mRecorder = newRecorder(mediaProjection, video, null, file)
-
         mRecorder!!.start()
-
     }
 
     private fun getOrCreateVirtualDisplay(
@@ -376,7 +380,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     private fun newRecorder(
         mediaProjection: MediaProjection, video: VideoEncodeConfig,
         audio: AudioEncodeConfig?, output: File
-    ): ScreenRecorder? {
+    ): ScreenRecorder {
         val display: VirtualDisplay? = getOrCreateVirtualDisplay(mediaProjection, video)
         val r = ScreenRecorder(video, audio, display, output.absolutePath)
 
@@ -469,10 +473,8 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         }
 
         startRecordBtn.setOnClickListener {
-            Toast.makeText(it.context, "startRecordBtn", Toast.LENGTH_LONG).show()
-            startCapturing(mMediaProjection!!)
-
-            // Screen.main1(createVirtualDisplay(), BuildConfig.VERSION_NAME ,"1024","1000000","60","1024:900:0:0","true")
+            ScreenApp.getScreenshotPermission();
+            //ScreenApp.getHandler().sendEmptyMessage(Constants.CREATE_SCREEN_CAPTURE_INTENT)
             flatAppBtn.callOnClick()
         }
 
@@ -529,12 +531,18 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     private fun closeOpenCircleMenu() {
 
         if (isHideCircularMenu) {
-            actionButton.animate().apply {
-                cancel()
-            }.alpha(0f)
-                .setDuration(0L)
-                .setStartDelay(0L)
-                .start()
+
+            actionButton?.let {
+                it.animate().apply {
+                    cancel()
+                }.alpha(0f)
+                    .setDuration(0L)
+                    .setStartDelay(0L)
+                    .start()
+
+                circularMenuParams!!.y =
+                    yPosition + (it.height - circularMenuParams!!.height) / 2
+            }
 
             isHideCircularMenu = false
 
@@ -544,8 +552,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
                 if (isRTL()) getScreenWidth() - circularMenuParams!!.width + overMargin else -overMargin
             }
 
-            circularMenuParams!!.y =
-                yPosition + (actionButton.height - circularMenuParams!!.height) / 2
+
 
             if (isRTL()) {
                 constraintSetRTL.clear(R.id.btnClose, ConstraintSet.START)
@@ -583,15 +590,18 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
             }
             .withEndAction {
                 if (isHideCircularMenu) {
-                    actionButton.animate().apply {
-                        cancel()
-                    }.alpha(1f)
-                        .setDuration(100L)
-                        .setStartDelay(0L)
-                        .withEndAction {
-                            actionButton.animate().alpha(0.25f).setDuration(3000L).start()
-                        }
-                        .start()
+                    actionButton?.let {
+                        it.animate().apply {
+                            cancel()
+                        }.alpha(1f)
+                            .setDuration(100L)
+                            .setStartDelay(0L)
+                            .withEndAction {
+                                it.animate().alpha(0.25f).setDuration(3000L).start()
+                            }
+                            .start()
+
+                    }
                 }
             }
             .start()
@@ -698,11 +708,12 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         }
         mVirtualDisplay = null
 
-        mMediaProjection?.apply {
-            unregisterCallback(mProjectionCallback)
-            stop()
-        }
-        mMediaProjection = null
+//        mMediaProjection?.apply {
+//            unregisterCallback(mProjectionCallback)
+//            stop()
+//        }
+//        mMediaProjection = null
+
         floatingViewManager?.removeAllViewToWindow()
         try {
             windowManger.removeView(circularMenu)
@@ -802,12 +813,6 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
 
         @JvmStatic
         private var isViewAddToWindomanager = false
-
-        @JvmStatic
-        var mMediaProjectionManager: MediaProjectionManager? = null
-
-        @JvmStatic
-        var mMediaProjection: MediaProjection? = null
 
         @JvmStatic
         val mProjectionCallback: MediaProjection.Callback =
