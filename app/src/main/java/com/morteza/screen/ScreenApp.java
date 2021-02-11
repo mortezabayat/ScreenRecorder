@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -94,16 +93,12 @@ public class ScreenApp extends Application {
 
     public static void setScreenshotPermission(final Intent permissionIntent) {
         ScreenApp.screenshotPermission = permissionIntent;
-        if (permissionIntent != null) {
+        stopMediaProjection(null);
 
-            if (null != mMediaProjection) {
-                mMediaProjection.stop();
-                mMediaProjection = null;
-            }
+        if (permissionIntent != null) {
             mMediaProjection = mMediaProjectionManager.
                     getMediaProjection(Activity.RESULT_OK, (Intent) screenshotPermission.clone());
-
-            Log.e("FloatingCircularMenu","mMediaProjectionManager is " + (mMediaProjection == null));
+            Log.e("FloatingCircularMenu", "mMediaProjectionManager is " + (mMediaProjection == null));
             getInstance().sendObjectToFlattingMenuService();
         }
     }
@@ -111,9 +106,17 @@ public class ScreenApp extends Application {
     public static MediaProjection getMediaProjection() {
         return mMediaProjection;
     }
-    public static void setMediaProjection(MediaProjection m) {
-         mMediaProjection = m;
+
+    public static void stopMediaProjection(MediaProjection.Callback callback) {
+        if (mMediaProjection != null) {
+            if (callback != null) {
+                mMediaProjection.unregisterCallback(callback);
+            }
+            mMediaProjection.stop();
+            mMediaProjection = null;
+        }
     }
+
     public void registerLocalReceiver(@NonNull BroadcastReceiver receiver,
                                       @NonNull IntentFilter filter) {
         mLocalBroadcastManager.registerReceiver(receiver, filter);
@@ -126,7 +129,7 @@ public class ScreenApp extends Application {
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //            startForegroundService(intent);
 //        } else {
-            startService(intent);
+        startService(intent);
 //        }
 
         // Bind to the service

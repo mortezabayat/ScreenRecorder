@@ -1,5 +1,8 @@
 package com.morteza.screen.tools
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -10,9 +13,10 @@ import android.media.MediaCodecInfo
 import android.media.MediaCodecList
 import android.media.projection.MediaProjection
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.os.StrictMode
-import android.widget.Toast
+import androidx.core.app.NotificationCompat
 import com.morteza.screen.R
 import com.morteza.screen.ScreenApp
 import com.morteza.screen.common.Constants.VIDEO_OUT_DIR_NAME
@@ -20,6 +24,7 @@ import com.morteza.screen.common.toast
 import com.morteza.screen.services.helper.FloatingUiHelper
 import com.morteza.screen.services.helper.FloatingUiHelperInterface
 import com.morteza.screen.tools.recorder.AudioEncodeConfig
+import com.morteza.screen.tools.recorder.Notifications
 import com.morteza.screen.tools.recorder.ScreenRecorder
 import com.morteza.screen.tools.recorder.VideoEncodeConfig
 import java.io.File
@@ -28,14 +33,16 @@ import java.util.*
 
 class ScreenRecorderManager(
     private val mContext: Context,
-    private val callbacks: FloatingUiHelperInterface.ScreenRecorderControl
-) {
+    private val callbacks: FloatingUiHelperInterface.ServiceCallback
+) : FloatingUiHelperInterface.FloatingUiControl, ScreenRecorder.Callback {
 
     private val TAG = "ScreenRecorderManager"
     private val mAudioToggle = true
-    var mVideoPath: File? = null
+    private var mVideoPath: File? = null
+    private var mStartTime: Long = 0
 
-    private lateinit var mFloatingUiHelper: FloatingUiHelper
+    private var mNotifications: Notifications? = null
+    private val mFloatingUiHelper by lazy { FloatingUiHelper(mContext, this) }
 
     private var mVideoRecorder: ScreenRecorder? = null
     private var mVirtualDisplay: VirtualDisplay? = null
@@ -50,39 +57,71 @@ class ScreenRecorderManager(
             }
         }
 
-    fun initializing(mFloatingUiHelper: FloatingUiHelper) {
+    fun initializing(intent: Intent) {
 
-        this.mFloatingUiHelper = mFloatingUiHelper
-        Utils.findEncodersByTypeAsync(ScreenRecorder.VIDEO_AVC) {
-            Utils.logCodecInfoList(it, ScreenRecorder.VIDEO_AVC, TAG)
-            mAvcCodecInfoList = it
-        }
-        Utils.findEncodersByTypeAsync(ScreenRecorder.AUDIO_AAC) {
-            Utils.logCodecInfoList(it, ScreenRecorder.AUDIO_AAC, TAG)
-            mAacCodecInfoList = it
+        mNotifications = Notifications(mContext)
+
+        if (!mFloatingUiHelper.isViewAddToWindowManager) {
+            Utils.findEncodersByTypeAsync(ScreenRecorder.VIDEO_AVC) {
+                Utils.logCodecInfoList(it, ScreenRecorder.VIDEO_AVC, TAG)
+                mAvcCodecInfoList = it
+            }
+            Utils.findEncodersByTypeAsync(ScreenRecorder.AUDIO_AAC) {
+                Utils.logCodecInfoList(it, ScreenRecorder.AUDIO_AAC, TAG)
+                mAacCodecInfoList = it
+            }
+            mFloatingUiHelper.initFloatingView(intent)
+//            createNotification(mContext)
+        } else {
+            mFloatingUiHelper.closeOpenCircleMenu()
         }
     }
 
-    fun destroy() {
-        mVideoRecorder?.quit()
-        mVideoRecorder = null
-        callbacks.stopRecorder()
+    private fun createNotification(context: Context): Notification {
 
+
+        val notificationChannel = context.getString(R.string.default_floatingview_channel_name)
+
+        return NotificationCompat.Builder(context, notificationChannel).apply {
+            setWhen(System.currentTimeMillis())
+            setSmallIcon(R.mipmap.ic_launcher)
+            setContentTitle(context.getString(R.string.chathead_content_title))
+            setContentText(context.getString(R.string.content_text))
+            setOngoing(true)
+            priority = NotificationCompat.PRIORITY_MIN
+            setCategory(NotificationCompat.CATEGORY_SERVICE)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val nm =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                nm.createNotificationChannel(
+                    NotificationChannel(
+                        notificationChannel,
+                        "App Service",
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    )
+                )
+            }
+        }.build()
+    }
+
+    fun destroyView() {
+        destroy()
+        mFloatingUiHelper.destroy()
+    }
+
+    private fun destroy() {
+        stopRecorder()
         mVirtualDisplay?.apply {
             surface = null
             release()
         }
         mVirtualDisplay = null
-
-        ScreenApp.getMediaProjection()?.apply {
-            unregisterCallback(mProjectionCallback)
-            stop()
-        }
-        ScreenApp.setMediaProjection(null)
+        ScreenApp.stopMediaProjection(mProjectionCallback)
     }
 
     private fun createAudioConfig(): AudioEncodeConfig {
-        val samplerate: Int = 44100
+        val sampleRate = 44100
         val channelCount: Int = 1
         val profile: Int = 0
 
@@ -93,7 +132,7 @@ class ScreenRecorderManager(
             mAacCodecInfoList[0].name,
             ScreenRecorder.AUDIO_AAC,
             124000,
-            samplerate,
+            sampleRate,
             channelCount,
             profile
         )
@@ -160,6 +199,7 @@ class ScreenRecorderManager(
 
         if (!dir.exists() && !dir.mkdirs()) {
             //Todo Con't create File path
+            cancelRecorder()
             return;
         }
         val format = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
@@ -199,7 +239,7 @@ class ScreenRecorderManager(
         val display: VirtualDisplay? = getOrCreateVirtualDisplay(mediaProjection, video)
         mVideoPath?.let {
             val r = ScreenRecorder(video, audio, display, it.absolutePath)
-            r.setCallback(callbacks)
+            r.setCallback(this)
             return r
         }
         return null
@@ -207,14 +247,8 @@ class ScreenRecorderManager(
 
     private fun cancelRecorder() {
         if (mVideoRecorder == null) return
-        Toast.makeText(
-            mContext,
-            mContext.getString(R.string.permission_denied_screen_recorder_cancel),
-            Toast.LENGTH_SHORT
-        ).show()
-        mVideoRecorder?.quit()
-        mVideoRecorder = null
-        callbacks.stopRecorder()
+        mContext.toast(mContext.getString(R.string.permission_denied_screen_recorder_cancel))
+        stopRecorder()
     }
 
     private fun viewResult(file: File) {
@@ -228,18 +262,19 @@ class ScreenRecorderManager(
         }
     }
 
-    fun stopRecordingAndPreview() {
-        // val file = File(mVideoRecorder!!.savedPath)
+    override fun onFinishFloatingView() {
+        callbacks.stopService()
+    }
+
+    override fun stopRecording() {
+        mNotifications?.stopAction()
 
         ScreenApp.getMediaProjection()?.apply {
             unregisterCallback(mProjectionCallback)
             stop()
         }
-        mVideoRecorder?.quit()
-        mVideoRecorder = null
-
-        callbacks.stopRecorder()
         mContext.toast(mContext.getString(R.string.recorder_stopped_saved_file) + " " + mVideoPath)
+
         val vmPolicy = StrictMode.getVmPolicy()
         try { // disable detecting FileUriExposure on public file
             mVideoPath?.let {
@@ -249,5 +284,44 @@ class ScreenRecorderManager(
         } finally {
             StrictMode.setVmPolicy(vmPolicy)
         }
+        destroy()
+    }
+
+    private fun stopRecorder() {
+        mVideoRecorder?.quit()
+        mVideoRecorder = null
+        mNotifications?.clear()
+        mFloatingUiHelper.unregisterReceiver()
+    }
+
+    override fun onStop(error: Throwable?) {
+        mStartTime = 0
+        mNotifications?.clear()
+
+        if (error != null) {
+            mContext.toast("Recorder error ! See logcat for more details")
+            error.printStackTrace()
+            mVideoPath?.delete()
+        } else {
+            mVideoPath?.let {
+                val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                    .addCategory(Intent.CATEGORY_DEFAULT)
+                    .setData(Uri.fromFile(it))
+                mContext.sendBroadcast(intent)
+            }
+        }
+    }
+
+    override fun onStart() {
+        mStartTime = 0
+        mNotifications!!.recording(mStartTime)
+    }
+
+    override fun onRecording(presentationTimeUs: Long) {
+        if (mStartTime <= 0) {
+            mStartTime = presentationTimeUs
+        }
+        val time = (presentationTimeUs - mStartTime) / 1000
+        mNotifications!!.recording(time)
     }
 }

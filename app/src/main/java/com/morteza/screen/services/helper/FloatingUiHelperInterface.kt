@@ -1,17 +1,13 @@
 package com.morteza.screen.services.helper
 
-import android.content.Context
-import com.morteza.screen.tools.recorder.ScreenRecorder
-
 object FloatingUiHelperInterface {//ScreenRecorder.Callback
 
-    interface FloatingUiControl{
+    interface FloatingUiControl {
         fun stopRecording()
         fun onFinishFloatingView()
     }
 
-    interface ScreenRecorderControl : ScreenRecorder.Callback{
-        fun stopRecorder()
-
+    interface ServiceCallback {
+        fun stopService()
     }
 }
