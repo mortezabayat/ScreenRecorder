@@ -1,29 +1,22 @@
 package com.morteza.screen
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.media.projection.MediaProjection
-import android.media.projection.MediaProjectionManager
 import android.os.*
-import android.util.Log
 import android.view.Menu
 import android.view.WindowManager
-import com.morteza.screen.common.ActivityExtension.REQUEST_MEDIA_PROJECTION
 import com.morteza.screen.common.BaseActivity
 import com.morteza.screen.common.Constants.*
-import com.morteza.screen.common.askPermission
-import com.morteza.screen.common.hasPermissions
-import com.morteza.screen.common.requestPermissionsEX
 import com.morteza.screen.services.FloatingCircularMenuService
-import com.morteza.screen.services.FloatingCircularMenuService.Companion.mProjectionCallback
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager
 
 /**
  * @author Morteza
  * @version 2019/12/3
  */
+
+@Deprecated("This Activity Will Be Removed ...")
 class MainActivity : BaseActivity(), Handler.Callback {
 
     @SuppressLint("MissingSuperCall")
@@ -59,10 +52,10 @@ class MainActivity : BaseActivity(), Handler.Callback {
         }
         ScreenApp.setHandler(Handler(Looper.getMainLooper(), this))
 
-        if (!hasPermissions()) {
-            requestPermissionsEX()
-            askPermission()
-        }
+//        if (!hasPermissions()) {
+//            requestPermissionsEX()
+//            askOverlayPermission()
+//        }
 
 //        mMediaProjectionManager =
 //            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager

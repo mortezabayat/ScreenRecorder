@@ -30,22 +30,22 @@ import static android.os.Build.VERSION_CODES.N;
  * @author Morteza
  * @version 2019/12/3
  */
-class MicRecorder implements Encoder {
+public class MicRecorder implements Encoder {
     private static final String TAG = "MicRecorder";
-    private static final boolean VERBOSE = false;
+    private static final boolean VERBOSE = true;
 
     private final AudioEncoder mEncoder;
     private final HandlerThread mRecordThread;
     private RecordHandler mRecordHandler;
     private AudioRecord mMic; // access in mRecordThread only!
-    private int mSampleRate;
-    private int mChannelConfig;
-    private int mFormat = AudioFormat.ENCODING_PCM_16BIT;
+    private final int mSampleRate;
+    private final int mChannelConfig;
+    private final int mFormat = AudioFormat.ENCODING_PCM_16BIT;
 
-    private AtomicBoolean mForceStop = new AtomicBoolean(false);
+    private final AtomicBoolean mForceStop = new AtomicBoolean(false);
     private BaseEncoder.Callback mCallback;
     private CallbackDelegate mCallbackDelegate;
-    private int mChannelsSampleRate;
+    private final int mChannelsSampleRate;
 
     MicRecorder(AudioEncodeConfig config) {
         mEncoder = new AudioEncoder(config);
@@ -103,7 +103,7 @@ class MicRecorder implements Encoder {
 
 
     private static class CallbackDelegate extends Handler {
-        private BaseEncoder.Callback mCallback;
+        private final BaseEncoder.Callback mCallback;
 
         CallbackDelegate(Looper l, BaseEncoder.Callback callback) {
             super(l);
@@ -146,9 +146,9 @@ class MicRecorder implements Encoder {
 
     private class RecordHandler extends Handler {
 
-        private LinkedList<MediaCodec.BufferInfo> mCachedInfos = new LinkedList<>();
-        private LinkedList<Integer> mMuxingOutputBufferIndices = new LinkedList<>();
-        private int mPollRate = 2048_000 / mSampleRate; // poll per 2048 samples
+        private final LinkedList<MediaCodec.BufferInfo> mCachedInfos = new LinkedList<>();
+        private final LinkedList<Integer> mMuxingOutputBufferIndices = new LinkedList<>();
+        private final int mPollRate = 2048_000 / mSampleRate; // poll per 2048 samples
 
         RecordHandler(Looper l) {
             super(l);
@@ -285,7 +285,7 @@ class MicRecorder implements Encoder {
 
 
     private static final int LAST_FRAME_ID = -1;
-    private SparseLongArray mFramesUsCache = new SparseLongArray(2);
+    private final SparseLongArray mFramesUsCache = new SparseLongArray(2);
 
     /**
      * Gets presentation time (us) of polled frame.

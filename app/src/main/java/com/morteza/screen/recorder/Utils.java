@@ -9,19 +9,19 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * @author Morteza
  * @version 2019/12/3
  */
 public class Utils {
 
-
     public interface Callback {
         void onResult(MediaCodecInfo[] infos);
     }
 
     static final class EncoderFinder extends AsyncTask<String, Void, MediaCodecInfo[]> {
-        private Callback func;
+        private final Callback func;
 
         EncoderFinder(Callback func) {
             this.func = func;
@@ -47,9 +47,9 @@ public class Utils {
      *
      * @return Returns empty array if not found any encoder supported specified MIME type
      */
-  public   static MediaCodecInfo[] findEncodersByType(String mimeType) {
+    public static MediaCodecInfo[] findEncodersByType(String mimeType) {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
-        List<MediaCodecInfo> infos = new ArrayList<>();
+        List<MediaCodecInfo> infoList = new ArrayList<>();
         for (MediaCodecInfo info : codecList.getCodecInfos()) {
             if (!info.isEncoder()) {
                 continue;
@@ -61,10 +61,10 @@ public class Utils {
                 // unsupported
                 continue;
             }
-            infos.add(info);
+            infoList.add(info);
         }
-
-        return infos.toArray(new MediaCodecInfo[infos.size()]);
+        MediaCodecInfo[] mediaCodecInfoArray = new MediaCodecInfo[infoList.size()];
+        return infoList.toArray(mediaCodecInfoArray);
     }
 
 
@@ -76,7 +76,7 @@ public class Utils {
     /**
      * @param avcProfileLevel AVC CodecProfileLevel
      */
-   public static String avcProfileLevelToString(MediaCodecInfo.CodecProfileLevel avcProfileLevel) {
+    public static String avcProfileLevelToString(MediaCodecInfo.CodecProfileLevel avcProfileLevel) {
         if (sAVCProfiles.size() == 0 || sAVCLevels.size() == 0) {
             initProfileLevels();
         }
@@ -190,7 +190,7 @@ public class Utils {
 
     static SparseArray<String> sColorFormats = new SparseArray<>();
 
-   public static String toHumanReadable(int colorFormat) {
+    public static String toHumanReadable(int colorFormat) {
         if (sColorFormats.size() == 0) {
             initColorFormatFields();
         }

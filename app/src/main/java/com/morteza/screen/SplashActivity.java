@@ -5,9 +5,7 @@ import android.content.Intent;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -16,35 +14,31 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.morteza.screen.common.Constants;
 import com.morteza.screen.common.ExtensionKt;
-import com.morteza.screen.services.FloatingCircularMenuService;
-
-import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
+import com.morteza.screen.common.PermissionManager;
 
 import static com.morteza.screen.ScreenApp.setScreenshotPermission;
-import static com.morteza.screen.common.Constants.CREATE_SCREEN_CAPTURE_INTENT;
-import static com.morteza.screen.common.Constants.MOVE_TO_BACKGROUND;
-import static com.morteza.screen.common.Constants.MOVE_TO_FOREGROUND;
-import static com.morteza.screen.common.Constants.START_FLOATING_VIEW_SERVICE;
 
-public class SplashActivity extends AppCompatActivity implements Handler.Callback {
+public class SplashActivity extends AppCompatActivity {
 
     private final String TAG = "SplashActivity";
-
-    private void startFloatingViewService() {
-        Intent intent = new Intent(this, FloatingCircularMenuService.class);
-        intent.putExtra(FloatingCircularMenuService.EXTRA_CUTOUT_SAFE_AREA,
-                FloatingViewManager.Companion.findCutoutSafeArea(this));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-        } else {
-            startService(intent);
-        }
-    }
+    private static boolean sendRequest = false;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == Constants.ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.canDrawOverlays(this)) {
+                    // You have't permission
+                    finish();
+                }
+            } else {
+                //Todo  Need handel overlay in to 22 , 21
+            }
+            ExtensionKt.requestAllPermissions(this);
+        }
+
         if (Constants.REQUEST_MEDIA_PROJECTION == requestCode) {
             if (Activity.RESULT_OK == resultCode && data != null) {
                 setScreenshotPermission((Intent) data.clone());
@@ -56,42 +50,72 @@ public class SplashActivity extends AppCompatActivity implements Handler.Callbac
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.e(TAG, "Permission callback called------- ");
+        if (requestCode == Constants.REQUEST_ID_ALL_PERMISSIONS) {
+            boolean isAllGranted = PermissionManager.handelAllPermissionsRequestResult(permissions, grantResults);
+            if (isAllGranted) {
+                init();
+            } else {
+                PermissionManager.shouldShowRequestPermissionRationale(this);
+            }
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setFinishOnTouchOutside(true);
-        Log.e(TAG, "onCreate");
-
-        if (savedInstanceState == null)
-            ScreenApp.setHandler(new Handler(Looper.getMainLooper(), this));
-
-        if (!ExtensionKt.hasPermissions(this)) {
-            ExtensionKt.requestPermissionsEX(this);
-            ExtensionKt.askPermission(this);
+        Log.e(TAG, "onCreate  " + sendRequest);
+        if (ExtensionKt.hasWriteStoragePermission(this)) {
+            init();
+        } else {
+            if (ExtensionKt.hasOverlayPermission(this)) {
+                ExtensionKt.requestAllPermissions(this);
+            } else {
+                ExtensionKt.askOverlayPermission(this);
+            }
         }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        boolean sendRequest = getIntent().getBooleanExtra(Constants.SEND_REQUEST_MEDIA_PROJECTION, false);
-        Log.e(TAG, "onStart " + sendRequest);
 
-        if (sendRequest) {
-
-            MediaProjectionManager mediaProjectionManager = ScreenApp.getMediaProjectionManager();
-            if (mediaProjectionManager != null) {
-                Intent captureIntent = mediaProjectionManager.createScreenCaptureIntent();
-                startActivityForResult(captureIntent, Constants.REQUEST_MEDIA_PROJECTION);
-            }
-        } else {
-            ScreenApp.getHandler().sendEmptyMessageDelayed(MOVE_TO_BACKGROUND, 1000);
-        }
     }
 
     @Override
     protected void onStop() {
         Log.e(TAG, "onStop");
         super.onStop();
+    }
+
+    private void init() {
+        sendRequest = getIntent().getBooleanExtra(Constants.SEND_REQUEST_MEDIA_PROJECTION, false);
+
+        if (sendRequest) {
+            MediaProjectionManager mediaProjectionManager = ScreenApp.getMediaProjectionManager();
+            if (mediaProjectionManager != null) {
+                Intent captureIntent = mediaProjectionManager.createScreenCaptureIntent();
+                startActivityForResult(captureIntent, Constants.REQUEST_MEDIA_PROJECTION);
+            }
+        } else {
+            finish();
+        }
+    }
+
+    /*
+    private void startFloatingViewService() {
+        Intent intent = new Intent(this, FloatingCircularMenuService.class);
+        intent.putExtra(FloatingCircularMenuService.EXTRA_CUTOUT_SAFE_AREA,
+                FloatingViewManager.Companion.findCutoutSafeArea(this));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
     }
 
     @Override
@@ -121,4 +145,5 @@ public class SplashActivity extends AppCompatActivity implements Handler.Callbac
         }
         return true;
     }
+     */
 }

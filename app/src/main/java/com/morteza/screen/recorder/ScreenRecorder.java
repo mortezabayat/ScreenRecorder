@@ -30,7 +30,7 @@ public class ScreenRecorder {
     private static final int INVALID_INDEX = -1;
     public static final String VIDEO_AVC = MIMETYPE_VIDEO_AVC; // H.264 Advanced Video Coding
     public static final String AUDIO_AAC = MIMETYPE_AUDIO_AAC; // H.264 Advanced Audio Coding
-    private String mDstPath;
+    private final String mDstPath;
     private VideoEncoder mVideoEncoder;
     private MicRecorder mAudioEncoder;
 
@@ -39,18 +39,18 @@ public class ScreenRecorder {
     private MediaMuxer mMuxer;
     private boolean mMuxerStarted = false;
 
-    private AtomicBoolean mForceQuit = new AtomicBoolean(false);
-    private AtomicBoolean mIsRunning = new AtomicBoolean(false);
+    private final AtomicBoolean mForceQuit = new AtomicBoolean(false);
+    private final AtomicBoolean mIsRunning = new AtomicBoolean(false);
     private VirtualDisplay mVirtualDisplay;
 
     private HandlerThread mWorker;
     private CallbackHandler mHandler;
 
     private Callback mCallback;
-    private LinkedList<Integer> mPendingVideoEncoderBufferIndices = new LinkedList<>();
-    private LinkedList<Integer> mPendingAudioEncoderBufferIndices = new LinkedList<>();
-    private LinkedList<MediaCodec.BufferInfo> mPendingAudioEncoderBufferInfos = new LinkedList<>();
-    private LinkedList<MediaCodec.BufferInfo> mPendingVideoEncoderBufferInfos = new LinkedList<>();
+    private final LinkedList<Integer> mPendingVideoEncoderBufferIndices = new LinkedList<>();
+    private final LinkedList<Integer> mPendingAudioEncoderBufferIndices = new LinkedList<>();
+    private final LinkedList<MediaCodec.BufferInfo> mPendingAudioEncoderBufferInfoList = new LinkedList<>();
+    private final LinkedList<MediaCodec.BufferInfo> mPendingVideoEncoderBufferInfoList = new LinkedList<>();
 
     /**
      * @param display for {@link VirtualDisplay#setSurface(Surface)}
@@ -188,7 +188,7 @@ public class ScreenRecorder {
         }
         if (!mMuxerStarted || mVideoTrackIndex == INVALID_INDEX) {
             mPendingVideoEncoderBufferIndices.add(index);
-            mPendingVideoEncoderBufferInfos.add(buffer);
+            mPendingVideoEncoderBufferInfoList.add(buffer);
             return;
         }
         ByteBuffer encodedData = mVideoEncoder.getOutputBuffer(index);
@@ -211,7 +211,7 @@ public class ScreenRecorder {
         }
         if (!mMuxerStarted || mAudioTrackIndex == INVALID_INDEX) {
             mPendingAudioEncoderBufferIndices.add(index);
-            mPendingAudioEncoderBufferInfos.add(buffer);
+            mPendingAudioEncoderBufferInfoList.add(buffer);
             return;
 
         }
@@ -319,12 +319,12 @@ public class ScreenRecorder {
         }
         if (VERBOSE) Log.i(TAG, "Mux pending video output buffers...");
         MediaCodec.BufferInfo info;
-        while ((info = mPendingVideoEncoderBufferInfos.poll()) != null) {
+        while ((info = mPendingVideoEncoderBufferInfoList.poll()) != null) {
             int index = mPendingVideoEncoderBufferIndices.poll();
             muxVideo(index, info);
         }
         if (mAudioEncoder != null) {
-            while ((info = mPendingAudioEncoderBufferInfos.poll()) != null) {
+            while ((info = mPendingAudioEncoderBufferInfoList.poll()) != null) {
                 int index = mPendingAudioEncoderBufferIndices.poll();
                 muxAudio(index, info);
             }
@@ -411,9 +411,9 @@ public class ScreenRecorder {
 
     private void stopEncoders() {
         mIsRunning.set(false);
-        mPendingAudioEncoderBufferInfos.clear();
+        mPendingAudioEncoderBufferInfoList.clear();
         mPendingAudioEncoderBufferIndices.clear();
-        mPendingVideoEncoderBufferInfos.clear();
+        mPendingVideoEncoderBufferInfoList.clear();
         mPendingVideoEncoderBufferIndices.clear();
         // maybe called on an error has been occurred
         try {
@@ -465,11 +465,10 @@ public class ScreenRecorder {
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    protected void finalize() {
         if (mVirtualDisplay != null) {
             Log.e(TAG, "release() not called!");
             release();
         }
     }
-
 }

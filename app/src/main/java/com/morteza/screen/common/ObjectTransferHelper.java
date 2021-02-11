@@ -1,4 +1,4 @@
-package com.morteza.screen;
+package com.morteza.screen.common;
 
 public class ObjectTransferHelper {
 //    public interface ObjectSender

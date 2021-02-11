@@ -74,7 +74,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     private var floatingViewManager: FloatingViewManager? = null
     private var xPosition: Int = 0
     private var yPosition: Int = 0
-    private var mRecorder: ScreenRecorder? = null
+    private var mVideoRecorder: ScreenRecorder? = null
     private var mVirtualDisplay: VirtualDisplay? = null
     private var mAvcCodecInfos: Array<MediaCodecInfo> = emptyArray()
     private var mAacCodecInfos: Array<MediaCodecInfo> = emptyArray()
@@ -239,20 +239,23 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
 
     private val mAudioToggle = true
 
-//    private fun createAudioConfig(): AudioEncodeConfig? {
-//        val bitrate: Int = getSelectedAudioBitrate()
-//        val samplerate: Int = getSelectedAudioSampleRate()
-//        val channelCount: Int = getSelectedAudioChannelCount()
-//        val profile: Int = getSelectedAudioProfile()
-//        return AudioEncodeConfig(
-//            ScreenRecorder.VIDEO_AVC,
-//            ScreenRecorder.AUDIO_AAC,
-//            2000000,
-//            samplerate,
-//            channelCount,
-//            profile
-//        )
-//    }
+    private fun createAudioConfig(): AudioEncodeConfig {
+        val samplerate: Int = 48000
+        val channelCount: Int = 1
+        val profile: Int = 0
+
+        mAacCodecInfos =
+            Utils.findEncodersByType(ScreenRecorder.AUDIO_AAC)
+
+        return AudioEncodeConfig(
+            mAacCodecInfos[0].name,
+            ScreenRecorder.AUDIO_AAC,
+            2000000,
+            samplerate,
+            channelCount,
+            profile
+        )
+    }
 
     private fun createVideoConfig(): VideoEncodeConfig {//Default
 //        val codec: String = getSelectedVideoCodec()
@@ -335,7 +338,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
         mediaProjection?.registerCallback(mProjectionCallback,null);
 
         val video: VideoEncodeConfig = createVideoConfig()
-//        val audio: AudioEncodeConfig = createAudioConfig() // audio can be null
+        val audio: AudioEncodeConfig = createAudioConfig() // audio can be null
 
         val dir = getSavingDir()
 
@@ -352,8 +355,8 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
                     + "-" + video.width + "x" + video.height + ".mp4"
         )
         Log.e(TAG, "Create recorder with :$video \n \n $file")
-        mRecorder = newRecorder(mediaProjection, video, null, file)
-        mRecorder!!.start()
+        mVideoRecorder = newRecorder(mediaProjection, video, audio, file)
+        mVideoRecorder!!.start()
     }
 
     private fun getOrCreateVirtualDisplay(
@@ -750,8 +753,8 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     private fun stopRecorder() {
         mNotifications?.clear()
 
-        mRecorder?.quit()
-        mRecorder = null
+        mVideoRecorder?.quit()
+        mVideoRecorder = null
         try {
             unregisterReceiver(mStopActionReceiver)
         } catch (e: Exception) {
@@ -771,7 +774,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     }
 
     private fun stopRecordingAndOpenFile(context: Context) {
-        val file = File(mRecorder!!.savedPath)
+        val file = File(mVideoRecorder!!.savedPath)
         stopRecorder()
         Toast.makeText(
             context,
@@ -798,7 +801,7 @@ class FloatingCircularMenuService : Service(), FloatingViewListener {
     }
 
     private fun cancelRecorder() {
-        if (mRecorder == null) return
+        if (mVideoRecorder == null) return
         Toast.makeText(
             this,
             getString(R.string.permission_denied_screen_recorder_cancel),
