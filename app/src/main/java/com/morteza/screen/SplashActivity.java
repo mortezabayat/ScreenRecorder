@@ -17,7 +17,10 @@ import com.morteza.screen.common.ExtensionKt;
 import com.morteza.screen.common.PermissionManager;
 
 import static com.morteza.screen.ScreenApp.setScreenshotPermission;
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 public class SplashActivity extends AppCompatActivity {
 
     private final String TAG = "SplashActivity";

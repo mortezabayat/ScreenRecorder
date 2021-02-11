@@ -13,6 +13,7 @@ import com.morteza.screen.R
  * @author Morteza
  * @version 2019/12/3
  */
+@Deprecated("This Activity Will Be Removed ...")
 class SlideshowFragment : Fragment() {
 
     private lateinit var slideshowViewModel: SlideshowViewModel

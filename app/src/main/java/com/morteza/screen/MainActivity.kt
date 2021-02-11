@@ -69,7 +69,7 @@ class MainActivity : BaseActivity(), Handler.Callback {
 
         // launch service
         val service = FloatingCircularMenuService::class.java
-        val key: String = FloatingCircularMenuService.EXTRA_CUTOUT_SAFE_AREA
+        val key: String = EXTRA_CUTOUT_SAFE_AREA
         val intent = Intent(this, service).putExtra(
             key,
             FloatingViewManager.findCutoutSafeArea(this)

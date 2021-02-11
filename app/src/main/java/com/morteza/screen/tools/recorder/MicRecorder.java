@@ -1,4 +1,4 @@
-package com.morteza.screen.recorder;
+package com.morteza.screen.tools.recorder;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;

@@ -11,17 +11,15 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.morteza.screen.common.Constants;
+
 public class FlattingMenuService extends Service {
-    /**
-     * Command to the service to display a message
-     */
-   public static final int MSG_SAY_HELLO = 1;
 
     /**
      * Handler of incoming messages from clients.
      */
     static class IncomingHandler extends Handler {
-        private Context applicationContext;
+        private final Context applicationContext;
 
         IncomingHandler(Context context) {
             applicationContext = context.getApplicationContext();
@@ -30,7 +28,7 @@ public class FlattingMenuService extends Service {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MSG_SAY_HELLO:
+                case  Constants.START_VIDEO_RECORDER:
                     Toast.makeText(applicationContext, "hello!", Toast.LENGTH_SHORT).show();
                     break;
                 default:

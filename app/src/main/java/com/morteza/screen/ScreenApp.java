@@ -111,7 +111,9 @@ public class ScreenApp extends Application {
     public static MediaProjection getMediaProjection() {
         return mMediaProjection;
     }
-
+    public static void setMediaProjection(MediaProjection m) {
+         mMediaProjection = m;
+    }
     public void registerLocalReceiver(@NonNull BroadcastReceiver receiver,
                                       @NonNull IntentFilter filter) {
         mLocalBroadcastManager.registerReceiver(receiver, filter);
@@ -119,14 +121,13 @@ public class ScreenApp extends Application {
 
     private void startFloatingViewService() {
         Intent intent = new Intent(this, FloatingCircularMenuService.class);
-        intent.putExtra(FloatingCircularMenuService.EXTRA_CUTOUT_SAFE_AREA,
+        intent.putExtra(Constants.EXTRA_CUTOUT_SAFE_AREA,
                 FloatingViewManager.Companion.findCutoutSafeArea(null));
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //            startForegroundService(intent);
 //        } else {
             startService(intent);
 //        }
-
 
         // Bind to the service
         bindService(intent,

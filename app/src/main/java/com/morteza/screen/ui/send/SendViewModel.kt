@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
  * @author Morteza
  * @version 2019/12/3
  */
+@Deprecated("This Activity Will Be Removed ...")
+
 class SendViewModel : ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {

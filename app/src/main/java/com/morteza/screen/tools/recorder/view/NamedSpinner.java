@@ -1,4 +1,4 @@
-package com.morteza.screen.recorder.view;
+package com.morteza.screen.tools.recorder.view;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -18,6 +18,7 @@ import com.morteza.screen.R;
  * @author Morteza
  * @version 2019/12/3
  */
+@Deprecated
 public class NamedSpinner extends LinearLayout {
     private TextView mTitleView;
     private Spinner mSpinner;

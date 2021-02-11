@@ -1,14 +1,18 @@
-package com.morteza.screen.recorder;
+package com.morteza.screen.tools;
 
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static android.media.MediaFormat.MIMETYPE_VIDEO_AVC;
 
 /**
  * @author Morteza
@@ -33,8 +37,8 @@ public class Utils {
         }
 
         @Override
-        protected void onPostExecute(MediaCodecInfo[] mediaCodecInfos) {
-            func.onResult(mediaCodecInfos);
+        protected void onPostExecute(MediaCodecInfo[] mediaCodecInfo_s) {
+            func.onResult(mediaCodecInfo_s);
         }
     }
 
@@ -100,7 +104,7 @@ public class Utils {
         return profile + '-' + level;
     }
 
-    static String[] aacProfiles() {
+    public static String[] aacProfiles() {
         if (sAACProfiles.size() == 0) {
             initProfileLevels();
         }
@@ -229,5 +233,51 @@ public class Utils {
             }
         }
 
+    }
+
+    /**
+     * Print information of all MediaCodec on this device.
+     */
+    public static void logCodecInfoList(MediaCodecInfo[] codecInfoList, String mimeType, String TAG) {
+        for (MediaCodecInfo info : codecInfoList) {
+            StringBuilder builder = new StringBuilder(512);
+            MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mimeType);
+
+            builder.append("Encoder '").append(info.getName()).append('\'')
+                    .append("\n  supported : ")
+                    .append(Arrays.toString(info.getSupportedTypes()));
+            MediaCodecInfo.VideoCapabilities videoCaps = caps.getVideoCapabilities();
+
+            if (videoCaps != null) {
+                builder.append("\n  Video capabilities:")
+                        .append("\n  Widths: ").append(videoCaps.getSupportedWidths())
+                        .append("\n  Heights: ").append(videoCaps.getSupportedHeights())
+                        .append("\n  Frame Rates: ").append(videoCaps.getSupportedFrameRates())
+                        .append("\n  Bitrate: ").append(videoCaps.getBitrateRange());
+
+                if (MIMETYPE_VIDEO_AVC.equals(mimeType)) {
+                    MediaCodecInfo.CodecProfileLevel[] levels = caps.profileLevels;
+                    builder.append("\n  Profile-levels: ");
+                    for (MediaCodecInfo.CodecProfileLevel level : levels) {
+                        builder.append("\n  ")
+                                .append(Utils.avcProfileLevelToString(level));
+                    }
+                }
+                builder.append("\n  Color-formats: ");
+                for (int c : caps.colorFormats) {
+                    builder.append("\n  ")
+                            .append(Utils.toHumanReadable(c));
+                }
+            }
+            MediaCodecInfo.AudioCapabilities audioCaps = caps.getAudioCapabilities();
+            if (audioCaps != null) {
+                builder.append("\n Audio capabilities:")
+                        .append("\n Sample Rates: ")
+                        .append(Arrays.toString(audioCaps.getSupportedSampleRates()))
+                        .append("\n Bit Rates: ").append(audioCaps.getBitrateRange())
+                        .append("\n Max channels: ").append(audioCaps.getMaxInputChannelCount());
+            }
+            Log.i(TAG, builder.toString());
+        }
     }
 }

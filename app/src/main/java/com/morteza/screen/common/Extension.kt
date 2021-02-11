@@ -9,11 +9,18 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.morteza.screen.R
 import com.morteza.screen.common.Constants.*
+import java.util.*
+import kotlin.collections.ArrayList
 
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 @TargetApi(23)
 fun Activity.askOverlayPermission() {
     val intent = Intent(
@@ -89,3 +96,16 @@ fun Context.showDialog(message: String?, okListener: DialogInterface.OnClickList
         .show()
 }
 
+fun Context.toast(message: String, vararg args: Any) {
+    // In Brazilian Portuguese this may take longer to read
+    val toast = Toast.makeText(
+        this,
+        if (args.isEmpty()) message else String.format(
+            Locale.US,
+            message,
+            *args
+        ),
+        Toast.LENGTH_LONG
+    )
+    toast.show()
+}

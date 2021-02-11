@@ -51,7 +51,7 @@
                 <action android:name="com.morteza.screen.ui.uiservice.UiService" />
             </intent-filter>
         </service>
-        <service android:name=".ui.OverlayService" />
+<!--        <service android:name=".ui.OverlayService" />-->
     </application>
 
 </manifest>

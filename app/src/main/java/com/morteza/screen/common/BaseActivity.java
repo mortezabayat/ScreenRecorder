@@ -4,7 +4,10 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 abstract public class BaseActivity extends AppCompatActivity {
 
     @Override

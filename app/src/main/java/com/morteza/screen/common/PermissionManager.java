@@ -8,7 +8,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 public class PermissionManager {
 
     private static final String TAG = "PermissionManager";

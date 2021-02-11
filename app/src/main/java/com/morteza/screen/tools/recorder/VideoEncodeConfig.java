@@ -1,7 +1,9 @@
-package com.morteza.screen.recorder;
+package com.morteza.screen.tools.recorder;
 
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+
+import com.morteza.screen.tools.Utils;
 
 import org.jetbrains.annotations.NotNull;
 

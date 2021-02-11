@@ -13,6 +13,8 @@ import com.morteza.screen.R
  * @author Morteza
  * @version 2019/12/3
  */
+@Deprecated("This Activity Will Be Removed ...")
+
 class HomeFragment : Fragment() {
 
     private lateinit var homeViewModel: HomeViewModel

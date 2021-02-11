@@ -1,6 +1,13 @@
 package com.morteza.screen.common;
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 public class Constants {
+
+
+
+    public static final String VIDEO_OUT_DIR_NAME = "ScreenRecorder";
 
     public static final int CREATE_SCREEN_CAPTURE_INTENT = 0XA1;
     public static final int MOVE_TO_BACKGROUND = 0XA2;
@@ -16,4 +23,9 @@ public class Constants {
     public static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 103;
 
     public static final String SEND_REQUEST_MEDIA_PROJECTION = "SEND_REQUEST_MEDIA_PROJECTION";
+
+    /**
+     * Intent key (Cutout safe area)
+     */
+    public static final String EXTRA_CUTOUT_SAFE_AREA = "cutout_safe_area";
 }
