@@ -61,7 +61,7 @@ class ScreenRecorderManager(
 
         mNotifications = Notifications(mContext)
 
-        if (!mFloatingUiHelper.isViewAddToWindowManager) {
+        if (!mFloatingUiHelper.mIsViewAddToWindowManager) {
             Utils.findEncodersByTypeAsync(ScreenRecorder.VIDEO_AVC) {
                 Utils.logCodecInfoList(it, ScreenRecorder.VIDEO_AVC, TAG)
                 mAvcCodecInfoList = it
@@ -267,7 +267,6 @@ class ScreenRecorderManager(
     }
 
     override fun stopRecording() {
-        mNotifications?.stopAction()
 
         ScreenApp.getMediaProjection()?.apply {
             unregisterCallback(mProjectionCallback)
@@ -287,7 +286,13 @@ class ScreenRecorderManager(
         destroy()
     }
 
+    override fun pauseRecording() {
+        //TODO("Not yet implemented")
+        mContext.toast("We Not Support This Option Now ... ")
+    }
+
     private fun stopRecorder() {
+        mFloatingUiHelper.mHaveActiveRecording = true
         mVideoRecorder?.quit()
         mVideoRecorder = null
         mNotifications?.clear()
@@ -313,6 +318,8 @@ class ScreenRecorderManager(
     }
 
     override fun onStart() {
+        mFloatingUiHelper.mHaveActiveRecording = true
+        mNotifications?.stopAction()
         mStartTime = 0
         mNotifications!!.recording(mStartTime)
     }

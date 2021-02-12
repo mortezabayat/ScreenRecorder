@@ -29,7 +29,6 @@ public class ScreenApp extends Application {
 
     private static Handler mHandler;
     private static ScreenApp __Instance = null;
-    private LocalBroadcastManager mLocalBroadcastManager;
     private static Intent screenshotPermission = null;
     private static MediaProjection mMediaProjection = null;
     private static MediaProjectionManager mMediaProjectionManager = null;
@@ -117,15 +116,10 @@ public class ScreenApp extends Application {
         }
     }
 
-    public void registerLocalReceiver(@NonNull BroadcastReceiver receiver,
-                                      @NonNull IntentFilter filter) {
-        mLocalBroadcastManager.registerReceiver(receiver, filter);
-    }
-
-    private void startFloatingViewService() {
+    public void startFloatingViewService(Activity activity) {
         Intent intent = new Intent(this, FloatingCircularMenuService.class);
         intent.putExtra(Constants.EXTRA_CUTOUT_SAFE_AREA,
-                FloatingViewManager.Companion.findCutoutSafeArea(null));
+                FloatingViewManager.Companion.findCutoutSafeArea(activity));
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //            startForegroundService(intent);
 //        } else {
@@ -133,9 +127,7 @@ public class ScreenApp extends Application {
 //        }
 
         // Bind to the service
-        bindService(intent,
-                mFlattingMenuServiceConnection,
-                Context.BIND_AUTO_CREATE);
+        bindService(intent, mFlattingMenuServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -153,8 +145,6 @@ public class ScreenApp extends Application {
         super.onCreate();
         mMediaProjectionManager = (MediaProjectionManager)
                 getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        mLocalBroadcastManager = LocalBroadcastManager.getInstance(this);
-        startFloatingViewService();
         __Instance = this;
     }
 

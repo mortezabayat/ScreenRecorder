@@ -96,6 +96,7 @@ public class SplashActivity extends AppCompatActivity {
                 startActivityForResult(captureIntent, Constants.REQUEST_MEDIA_PROJECTION);
             }
         } else {
+            ScreenApp.getInstance().startFloatingViewService(this);
             finish();
         }
     }

@@ -13,7 +13,6 @@ import android.os.Build
 import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.Toast
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
@@ -26,6 +25,7 @@ import com.morteza.screen.R
 import com.morteza.screen.ScreenApp
 import com.morteza.screen.common.Constants
 import com.morteza.screen.common.DisplayInfo
+import com.morteza.screen.common.toast
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager
 import kotlin.math.cos
@@ -35,89 +35,83 @@ class FloatingUiHelper(
     private val mContext: Context,
     private val mScreenRecordControl: FloatingUiHelperInterface.FloatingUiControl
 ) : FloatingViewListener {
-
-
     private val TAG = "FloatingUiHelper"
-
     private val ACTION_STOP = BuildConfig.APPLICATION_ID + ".action.STOP"
+    private val mWindowManger by lazy { mContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager }
+    private val mRadius by lazy { mContext.resources.getDimensionPixelSize(R.dimen.radius) }
+    private val mActionButtonSize by lazy { mContext.resources.getDimensionPixelSize(R.dimen.floating_icon_size) }
+    private val mOverMargin by lazy { (2 * mDisplayInfo.metrics.density).toInt() }
+    private var mCircularMenuParams: WindowManager.LayoutParams? = null
+    private lateinit var mCircularMenu: ConstraintLayout
 
-    private val windowManger by lazy { mContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager }
-    private val radius by lazy { mContext.resources.getDimensionPixelSize(R.dimen.radius) }
-    private val actionButtonSize by lazy { mContext.resources.getDimensionPixelSize(R.dimen.floating_icon_size) }
-    private val overMargin by lazy { (2 * mDisplayInfo.metrics.density).toInt() }
+    private var mActionButton: AppCompatImageView? = null
 
-    private var circularMenuParams: WindowManager.LayoutParams? = null
-    private var actionButton: AppCompatImageView? = null
-    private lateinit var circularMenu: ConstraintLayout
-    private lateinit var flatAppBtn: AppCompatImageView
-    private lateinit var toolsBtn: AppCompatImageView
-    private lateinit var startRecordBtn: AppCompatImageView
-    private lateinit var settingsBtn: AppCompatImageView
-    private lateinit var homeBtn: AppCompatImageView
+    private lateinit var mCloseBtn: AppCompatImageView
+    private lateinit var mToolsBtn: AppCompatImageView
+    private lateinit var mStartRecordBtn: AppCompatImageView
+    private lateinit var mHomeBtn: AppCompatImageView
 
-    val mDisplayInfo by lazy { DisplayInfo(windowManger) }
+    private lateinit var mPauseBtn: AppCompatImageView
+    private lateinit var mStopBtn: AppCompatImageView
+    private lateinit var mPaintBtn: AppCompatImageView
+    private lateinit var mSettingsBtn: AppCompatImageView
 
-    private var floatingViewManager: FloatingViewManager? = null
-    private val constraintSetRTL = ConstraintSet()
-    private val constraintSetLTR = ConstraintSet()
 
-    private lateinit var gestureDetector: GestureDetector
-    private var isHideCircularMenu = true
-    private var xPosition: Int = 0
-    private var yPosition: Int = 0
-    private val isMoveToEdge = true // For FloatingViewManager.MOVE_DIRECTION_THROWN
-    var isViewAddToWindowManager = false
-
+    val mDisplayInfo by lazy { DisplayInfo(mWindowManger) }
+    private var mFloatingViewManager: FloatingViewManager? = null
+    private val mConstraintSetRTL = ConstraintSet()
+    private val mConstraintSetLTR = ConstraintSet()
+    private lateinit var mGestureDetector: GestureDetector
+    private var mIsHideCircularMenu = true
+    private var mXPosition: Int = 0
+    private var mYPosition: Int = 0
+    private val mIsMoveToEdge = true // For FloatingViewManager.MOVE_DIRECTION_THROWN
+    var mIsViewAddToWindowManager = false
+    var mHaveActiveRecording = false
 
     @SuppressLint("InflateParams")
     fun initFloatingView(intent: Intent) {
-
-        val inflater = LayoutInflater.from(mContext)
-        actionButton =
-            inflater.inflate(R.layout.floating_action_button, null, false) as AppCompatImageView
-        actionButton?.setOnClickListener {
+        mActionButton =
+            LayoutInflater.from(mContext).inflate(
+                R.layout.floating_action_button,
+                null, false
+            ) as AppCompatImageView
+        mActionButton?.setOnClickListener {
             closeOpenCircleMenu()
         }
-
-
         val rect = intent.getParcelableExtra<Rect>(Constants.EXTRA_CUTOUT_SAFE_AREA)
-        floatingViewManager = FloatingViewManager(mContext, this).apply {
+        mFloatingViewManager = FloatingViewManager(mContext, this).apply {
             setFixedTrashIconImage(R.drawable.ic_trash_fixed)
             setActionTrashIconImage(R.drawable.ic_trash_action)
             setSafeInsetRect(rect)
-
             val options = FloatingViewManager.Options().apply {
                 moveDirection = FloatingViewManager.MOVE_DIRECTION_THROWN
-                overMargin = this@FloatingUiHelper.overMargin
+                overMargin = this@FloatingUiHelper.mOverMargin
                 floatingViewX =
-                    mDisplayInfo.metrics.widthPixels - actionButtonSize - radius + overMargin
-                floatingViewY = (mDisplayInfo.metrics.heightPixels - actionButtonSize) / 2
+                    mDisplayInfo.metrics.widthPixels - mActionButtonSize - mRadius + overMargin
+                floatingViewY = (mDisplayInfo.metrics.heightPixels - mActionButtonSize) / 2
                 isTrashViewEnabled = false
                 setDisplayMode(FloatingViewManager.DISPLAY_MODE_SHOW_ALWAYS)
             }
-            actionButton?.let {
+            mActionButton?.let {
                 addViewToWindow(it, options)
             }
         }
-
         initCircularMenu()
-
-        isViewAddToWindowManager = true
+        mIsViewAddToWindowManager = true
     }
 
     @SuppressLint("InflateParams", "ClickableViewAccessibility")
     private fun initCircularMenu() {
-
         //Init Git Repo as Private Mode.
         mContext.registerReceiver(mStopActionReceiver, IntentFilter(ACTION_STOP))
-
-        val inflater = LayoutInflater.from(mContext)
-
-        circularMenu =
-            inflater.inflate(R.layout.floating_action_circle_menu, null, false) as ConstraintLayout
-
-        constraintSetLTR.apply {
-            clone(circularMenu)
+        mCircularMenu =
+            LayoutInflater.from(mContext).inflate(
+                R.layout.floating_action_circle_menu,
+                null, false
+            ) as ConstraintLayout
+        mConstraintSetLTR.apply {
+            clone(mCircularMenu)
             connect(
                 R.id.btnClose,
                 ConstraintSet.START,
@@ -132,9 +126,8 @@ class FloatingUiHelper(
                 ConstraintSet.BOTTOM
             )
         }
-
-        constraintSetRTL.apply {
-            clone(circularMenu)
+        mConstraintSetRTL.apply {
+            clone(mCircularMenu)
             connect(R.id.btnClose, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END)
             connect(R.id.btnClose, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
             connect(
@@ -144,71 +137,75 @@ class FloatingUiHelper(
                 ConstraintSet.BOTTOM
             )
         }
-        flatAppBtn = circularMenu.findViewById(R.id.btnClose)
-        toolsBtn = circularMenu.findViewById(R.id.tools_btn)
-        startRecordBtn = circularMenu.findViewById(R.id.start_record_btn)
-        settingsBtn = circularMenu.findViewById(R.id.settings_btn)
-        homeBtn = circularMenu.findViewById(R.id.home_btn)
 
-        flatAppBtn.setOnClickListener {
-            closeOpenCircleMenu()
+        mCloseBtn = mCircularMenu.findViewById(R.id.btnClose)
+        mToolsBtn = mCircularMenu.findViewById(R.id.tools_btn)
+        mStartRecordBtn = mCircularMenu.findViewById(R.id.start_record_btn)
+        mSettingsBtn = mCircularMenu.findViewById(R.id.settings_btn)
+        mHomeBtn = mCircularMenu.findViewById(R.id.home_btn)
+
+        mPauseBtn = mCircularMenu.findViewById(R.id.pause_btn)
+        mPaintBtn = mCircularMenu.findViewById(R.id.paint_btn)
+        mStopBtn = mCircularMenu.findViewById(R.id.stop_btn)
+
+        mPauseBtn.setOnClickListener {
+            mScreenRecordControl.pauseRecording()
+            mCloseBtn.callOnClick()
         }
-
-        toolsBtn.setOnClickListener {
-            Toast.makeText(it.context, "Exit the app", Toast.LENGTH_LONG).show()
-            flatAppBtn.callOnClick()
-            onFinishFloatingView()
+        mPaintBtn.setOnClickListener {
+            mContext.toast("We Not Support This Option Now ... ")
+            mCloseBtn.callOnClick()
         }
-
-        startRecordBtn.setOnClickListener {
-            ScreenApp.getScreenshotPermission();
-            flatAppBtn.callOnClick()
-        }
-
-        settingsBtn.setOnClickListener {
-            Toast.makeText(it.context, "button4", Toast.LENGTH_LONG).show()
-
-            //stopRecorder()
-
-            flatAppBtn.callOnClick()
-        }
-
-        homeBtn.setOnClickListener {
-            Toast.makeText(it.context, "stop recording and open the file", Toast.LENGTH_LONG).show()
-            flatAppBtn.callOnClick()
-
+        mStopBtn.setOnClickListener {
+            mContext.toast("stop recording and open the file ")
+            mCloseBtn.callOnClick()
             mScreenRecordControl.stopRecording()
         }
 
+        mCloseBtn.setOnClickListener {
+            closeOpenCircleMenu()
+        }
+        mToolsBtn.setOnClickListener {
+            mContext.toast("Tools Button Screen Will Destroy ;( ... ")
+            mCloseBtn.callOnClick()
+            onFinishFloatingView()
+        }
+        mStartRecordBtn.setOnClickListener {
+            ScreenApp.getScreenshotPermission()
+            mCloseBtn.callOnClick()
+        }
+        mSettingsBtn.setOnClickListener {
+            mContext.toast("Setting Button ... ")
+            mCloseBtn.callOnClick()
+        }
+        mHomeBtn.setOnClickListener {
+            mContext.toast("Home Button ... ")
+            mCloseBtn.callOnClick()
+        }
         val gesture = object : GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
                 closeOpenCircleMenu()
                 return super.onSingleTapConfirmed(e)
             }
         }
-
-        gestureDetector = GestureDetector(mContext, gesture)
-
-        circularMenu.setOnTouchListener(FloatingButtonTouchListener())
+        mGestureDetector = GestureDetector(mContext, gesture)
+        mCircularMenu.setOnTouchListener(FloatingButtonTouchListener())
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         } else {
             WindowManager.LayoutParams.TYPE_PRIORITY_PHONE
         }
-
-        circularMenuParams = WindowManager.LayoutParams(
+        mCircularMenuParams = WindowManager.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
-            type,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
                     //or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                     or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSPARENT
         )
-
-        circularMenuParams!!.gravity = Gravity.TOP or Gravity.START
+        mCircularMenuParams!!.gravity = Gravity.TOP or Gravity.START
     }
 
     private val mStopActionReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -221,9 +218,9 @@ class FloatingUiHelper(
 
     fun closeOpenCircleMenu() {
 
-        if (isHideCircularMenu) {
+        if (mIsHideCircularMenu) {
 
-            actionButton?.let {
+            mActionButton?.let {
                 it.animate().apply {
                     cancel()
                 }.alpha(0f)
@@ -231,57 +228,72 @@ class FloatingUiHelper(
                     .setStartDelay(0L)
                     .start()
 
-                circularMenuParams!!.y =
-                    yPosition + (it.height - circularMenuParams!!.height) / 2
+                mCircularMenuParams!!.y =
+                    mYPosition + (it.height - mCircularMenuParams!!.height) / 2
             }
 
-            isHideCircularMenu = false
+            mIsHideCircularMenu = false
 
-            circularMenuParams!!.x = if (!isMoveToEdge) {
-                if (isRTL()) xPosition - circularMenuParams!!.width + actionButtonSize else xPosition
+            mCircularMenuParams!!.x = if (!mIsMoveToEdge) {
+                if (isRTL()) mXPosition - mCircularMenuParams!!.width + mActionButtonSize else mXPosition
             } else {
-                if (isRTL()) getScreenWidth() - circularMenuParams!!.width + overMargin else -overMargin
+                if (isRTL()) getScreenWidth() - mCircularMenuParams!!.width + mOverMargin else -mOverMargin
             }
-
-
 
             if (isRTL()) {
-                constraintSetRTL.clear(R.id.btnClose, ConstraintSet.START)
-                constraintSetRTL.applyTo(circularMenu)
+                mConstraintSetRTL.clear(R.id.btnClose, ConstraintSet.START)
+                mConstraintSetRTL.applyTo(mCircularMenu)
             } else {
-                constraintSetLTR.clear(R.id.btnClose, ConstraintSet.END)
-                constraintSetLTR.applyTo(circularMenu)
+                mConstraintSetLTR.clear(R.id.btnClose, ConstraintSet.END)
+                mConstraintSetLTR.applyTo(mCircularMenu)
             }
 
-            if (!ViewCompat.isAttachedToWindow(circularMenu)) {
-                windowManger.addView(circularMenu, circularMenuParams)
+            if (!ViewCompat.isAttachedToWindow(mCircularMenu)) {
+                mWindowManger.addView(mCircularMenu, mCircularMenuParams)
             } else {
-                circularMenu.isGone = false
-                windowManger.updateViewLayout(circularMenu, circularMenuParams)
+                mCircularMenu.isGone = false
+                mWindowManger.updateViewLayout(mCircularMenu, mCircularMenuParams)
             }
         } else {
-            isHideCircularMenu = true
+            mIsHideCircularMenu = true
         }
 
-        val angle = if (isHideCircularMenu) 0f else 45f
-        flatAppBtn.animate().apply {
+        val angle = if (mIsHideCircularMenu) 0f else 45f
+        mCloseBtn.animate().apply {
             cancel()
         }
             .rotation(angle)
             .setDuration(100L)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withStartAction {
-                val count = circularMenu.childCount - 1
-                circularMenu.forEachIndexed { index, view ->
+                val count = mCircularMenu.childCount - 1
+                mCircularMenu.forEachIndexed { index, view ->
                     if (view.id != R.id.btnClose) {
-                        if (!isHideCircularMenu) view.isGone = isHideCircularMenu
-                        view.side(isHideCircularMenu, radius, isRTL(), index == count - 1)
+                        if (mHaveActiveRecording) {
+                            if (view.id == R.id.pause_btn ||
+                                view.id == R.id.paint_btn ||
+                                view.id == R.id.stop_btn ||
+                                view.id == R.id.settings_btn
+                            ) {
+                                if (!mIsHideCircularMenu) view.isGone = mIsHideCircularMenu
+                            }
+
+                        } else {
+                            if (view.id == R.id.start_record_btn ||
+                                view.id == R.id.home_btn ||
+                                view.id == R.id.tools_btn ||
+                                view.id == R.id.settings_btn
+                            ) {
+                                if (!mIsHideCircularMenu) view.isGone = mIsHideCircularMenu
+                            }
+                        }
+                        view.side(mIsHideCircularMenu, mRadius, isRTL(), index == count - 1)
                     }
                 }
             }
             .withEndAction {
-                if (isHideCircularMenu) {
-                    actionButton?.let {
+                if (mIsHideCircularMenu) {
+                    mActionButton?.let {
                         it.animate().apply {
                             cancel()
                         }.alpha(1f)
@@ -339,14 +351,14 @@ class FloatingUiHelper(
                             }
                             .start()
                         }*/
-                        circularMenu.isGone = true
+                        mCircularMenu.isGone = true
                     }
                 }
             }
         }.start()
     }
 
-    private fun isRTL() = xPosition > mDisplayInfo.metrics.widthPixels / 2
+    private fun isRTL() = mXPosition > mDisplayInfo.metrics.widthPixels / 2
 
     private fun getScreenWidth() =
         if (mContext.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
@@ -357,11 +369,11 @@ class FloatingUiHelper(
     private inner class FloatingButtonTouchListener : View.OnTouchListener {
         @SuppressLint("ClickableViewAccessibility")
         override fun onTouch(v: View, event: MotionEvent): Boolean {
-            gestureDetector.onTouchEvent(event)
+            mGestureDetector.onTouchEvent(event)
             when (event.actionMasked) {
                 MotionEvent.ACTION_OUTSIDE -> {
-                    if (!circularMenu.isGone) {
-                        flatAppBtn.callOnClick()
+                    if (!mCircularMenu.isGone) {
+                        mCloseBtn.callOnClick()
                     }
                 }
             }
@@ -378,9 +390,9 @@ class FloatingUiHelper(
     }
 
     fun destroy() {
-        floatingViewManager?.removeAllViewToWindow()
+        mFloatingViewManager?.removeAllViewToWindow()
         try {
-            windowManger.removeView(circularMenu)
+            mWindowManger.removeView(mCircularMenu)
         } catch (e: IllegalArgumentException) {
         }
     }
@@ -396,8 +408,8 @@ class FloatingUiHelper(
         if (isFinishing) {
             Log.d(TAG, mContext.getString(R.string.deleted_soon))
         } else {
-            xPosition = x
-            yPosition = y
+            mXPosition = x
+            mYPosition = y
             Log.d(TAG, mContext.getString(R.string.touch_finished_position, x, y))
         }
     }

@@ -4,6 +4,7 @@ object FloatingUiHelperInterface {//ScreenRecorder.Callback
 
     interface FloatingUiControl {
         fun stopRecording()
+        fun pauseRecording()
         fun onFinishFloatingView()
     }
 
