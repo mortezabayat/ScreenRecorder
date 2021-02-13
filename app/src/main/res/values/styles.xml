@@ -41,7 +41,10 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item> <!-- Or any transparency or color you need -->
-        <item name="android:windowBackground">@drawable/background_splash</item>
+        <item name="android:windowBackground">@null</item>
+<!--
+        @drawable/background_splash
+-->
     </style>
 
 

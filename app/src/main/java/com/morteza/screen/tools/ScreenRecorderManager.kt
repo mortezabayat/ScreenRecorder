@@ -292,7 +292,7 @@ class ScreenRecorderManager(
     }
 
     private fun stopRecorder() {
-        mFloatingUiHelper.mHaveActiveRecording = true
+        mFloatingUiHelper.mHaveActiveRecording = false
         mVideoRecorder?.quit()
         mVideoRecorder = null
         mNotifications?.clear()

@@ -81,16 +81,17 @@ class FloatingUiHelper(
         }
         val rect = intent.getParcelableExtra<Rect>(Constants.EXTRA_CUTOUT_SAFE_AREA)
         mFloatingViewManager = FloatingViewManager(mContext, this).apply {
-            setFixedTrashIconImage(R.drawable.ic_trash_fixed)
-            setActionTrashIconImage(R.drawable.ic_trash_action)
+            setFixedTrashIconImage(R.drawable.ic_clear)
+            setActionTrashIconImage(R.drawable.circle_bg)
             setSafeInsetRect(rect)
+
             val options = FloatingViewManager.Options().apply {
                 moveDirection = FloatingViewManager.MOVE_DIRECTION_THROWN
                 overMargin = this@FloatingUiHelper.mOverMargin
                 floatingViewX =
                     mDisplayInfo.metrics.widthPixels - mActionButtonSize - mRadius + overMargin
                 floatingViewY = (mDisplayInfo.metrics.heightPixels - mActionButtonSize) / 2
-                isTrashViewEnabled = false
+                isTrashViewEnabled = true
                 setDisplayMode(FloatingViewManager.DISPLAY_MODE_SHOW_ALWAYS)
             }
             mActionButton?.let {

@@ -23,6 +23,7 @@ public class Constants {
     public static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 103;
 
     public static final String SEND_REQUEST_MEDIA_PROJECTION = "SEND_REQUEST_MEDIA_PROJECTION";
+    public static final String START_COUNT_DOWN = "START_COUNT_DOWN";
 
     /**
      * Intent key (Cutout safe area)

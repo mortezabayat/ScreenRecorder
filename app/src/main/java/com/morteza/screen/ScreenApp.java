@@ -2,11 +2,9 @@ package com.morteza.screen;
 
 import android.app.Activity;
 import android.app.Application;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
@@ -16,9 +14,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.morteza.screen.common.Constants;
 import com.morteza.screen.services.FloatingCircularMenuService;
@@ -82,13 +77,14 @@ public class ScreenApp extends Application {
     }
 
     protected static void openScreenshotPermissionRequester() {
-        final Intent intent =
+        final Intent mSplashActivityIntent =
                 new Intent(getInstance().getApplicationContext(),
                         SplashActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(Constants.SEND_REQUEST_MEDIA_PROJECTION, true);
-        getInstance().getApplicationContext().startActivity(intent);
+        mSplashActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mSplashActivityIntent.putExtra(Constants.SEND_REQUEST_MEDIA_PROJECTION, true);
+        getInstance().getApplicationContext().startActivity(mSplashActivityIntent);
     }
+
 
     public static void setScreenshotPermission(final Intent permissionIntent) {
         ScreenApp.screenshotPermission = permissionIntent;
@@ -98,7 +94,6 @@ public class ScreenApp extends Application {
             mMediaProjection = mMediaProjectionManager.
                     getMediaProjection(Activity.RESULT_OK, (Intent) screenshotPermission.clone());
             Log.e("FloatingCircularMenu", "mMediaProjectionManager is " + (mMediaProjection == null));
-            getInstance().sendObjectToFlattingMenuService();
         }
     }
 
