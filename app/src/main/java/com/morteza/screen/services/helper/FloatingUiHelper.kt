@@ -25,6 +25,7 @@ import com.morteza.screen.R
 import com.morteza.screen.ScreenApp
 import com.morteza.screen.common.Constants
 import com.morteza.screen.common.DisplayInfo
+import com.morteza.screen.common.UiNavigationManager
 import com.morteza.screen.common.toast
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager
@@ -154,7 +155,7 @@ class FloatingUiHelper(
             mCloseBtn.callOnClick()
         }
         mPaintBtn.setOnClickListener {
-            mContext.toast("We Not Support This Option Now ... ")
+            UiNavigationManager.getInstance().launchPainter()
             mCloseBtn.callOnClick()
         }
         mStopBtn.setOnClickListener {
@@ -176,11 +177,11 @@ class FloatingUiHelper(
             mCloseBtn.callOnClick()
         }
         mSettingsBtn.setOnClickListener {
-            mContext.toast("Setting Button ... ")
+            UiNavigationManager.getInstance().launchSetting()
             mCloseBtn.callOnClick()
         }
         mHomeBtn.setOnClickListener {
-            mContext.toast("Home Button ... ")
+            UiNavigationManager.getInstance().launchHome()
             mCloseBtn.callOnClick()
         }
         val gesture = object : GestureDetector.SimpleOnGestureListener() {

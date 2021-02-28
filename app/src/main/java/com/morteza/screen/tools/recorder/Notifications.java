@@ -58,7 +58,7 @@ public class Notifications extends ContextWrapper {
                     .setOnlyAlertOnce(true)
                     .addAction(stopAction())
                     .setWhen(System.currentTimeMillis())
-                    .setSmallIcon(R.drawable.ic_stat_recording);
+                    .setSmallIcon(R.mipmap.ic_launcher);
             if (Build.VERSION.SDK_INT >= O) {
                 builder.setChannelId(CHANNEL_ID)
                         .setUsesChronometer(true);

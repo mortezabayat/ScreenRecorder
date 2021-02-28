@@ -40,9 +40,14 @@ public class SplashActivity extends AppCompatActivity implements CountDownAnimat
 
         switch (requestCode) {
             case Constants.ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE: {
+
+                if (Activity.RESULT_OK != resultCode) {
+                    //Note OverLayer Not Access From User Launch Home Ui.
+                    break;
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(this)) {
-                        // You have't permission
+                        //Note You have't permission
                         finish();
                     }
                 } else {
@@ -77,7 +82,6 @@ public class SplashActivity extends AppCompatActivity implements CountDownAnimat
             }
         }
     }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

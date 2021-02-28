@@ -34,9 +34,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".MainAppActivity"
             android:theme="@style/AppTheme.NoActionBar"
-            android:excludeFromRecents="true"
             android:label="@string/app_name"
             android:launchMode="standard"/>
 

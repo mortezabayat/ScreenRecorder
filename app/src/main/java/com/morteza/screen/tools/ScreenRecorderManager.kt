@@ -1,8 +1,5 @@
 package com.morteza.screen.tools
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -13,10 +10,8 @@ import android.media.MediaCodecInfo
 import android.media.MediaCodecList
 import android.media.projection.MediaProjection
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.os.StrictMode
-import androidx.core.app.NotificationCompat
 import com.morteza.screen.R
 import com.morteza.screen.ScreenApp
 import com.morteza.screen.common.Constants.VIDEO_OUT_DIR_NAME
@@ -71,39 +66,11 @@ class ScreenRecorderManager(
                 mAacCodecInfoList = it
             }
             mFloatingUiHelper.initFloatingView(intent)
-//            createNotification(mContext)
         } else {
             mFloatingUiHelper.closeOpenCircleMenu()
         }
     }
 
-    private fun createNotification(context: Context): Notification {
-
-
-        val notificationChannel = context.getString(R.string.default_floatingview_channel_name)
-
-        return NotificationCompat.Builder(context, notificationChannel).apply {
-            setWhen(System.currentTimeMillis())
-            setSmallIcon(R.mipmap.ic_launcher)
-            setContentTitle(context.getString(R.string.chathead_content_title))
-            setContentText(context.getString(R.string.content_text))
-            setOngoing(true)
-            priority = NotificationCompat.PRIORITY_MIN
-            setCategory(NotificationCompat.CATEGORY_SERVICE)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val nm =
-                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                nm.createNotificationChannel(
-                    NotificationChannel(
-                        notificationChannel,
-                        "App Service",
-                        NotificationManager.IMPORTANCE_DEFAULT
-                    )
-                )
-            }
-        }.build()
-    }
 
     fun destroyView() {
         destroy()
