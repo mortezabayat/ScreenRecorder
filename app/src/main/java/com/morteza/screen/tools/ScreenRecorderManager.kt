@@ -140,7 +140,7 @@ class ScreenRecorderManager(
 
         return VideoEncodeConfig(
             mFloatingUiHelper.mDisplayInfo.x,
-            mFloatingUiHelper.mDisplayInfo.y,
+            mFloatingUiHelper.mDisplayInfo.y,//1520
             4000000,
             mFloatingUiHelper.mDisplayInfo.metrics.densityDpi,
             30,

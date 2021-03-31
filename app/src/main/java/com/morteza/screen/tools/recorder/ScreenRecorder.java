@@ -12,6 +12,8 @@ import android.os.Message;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.annotation.WorkerThread;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -332,7 +334,7 @@ public class ScreenRecorder {
         if (VERBOSE) Log.i(TAG, "Mux pending video output buffers done.");
     }
 
-    // @WorkerThread
+     @WorkerThread
     private void prepareVideoEncoder() throws IOException {
         VideoEncoder.Callback callback = new VideoEncoder.Callback() {
             boolean ranIntoError = false;

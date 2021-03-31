@@ -49,6 +49,7 @@ abstract class BaseEncoder implements Encoder {
      */
     @Override
     public void prepare() throws IOException {
+
         if (Looper.myLooper() == null
                 || Looper.myLooper() == Looper.getMainLooper()) {
             throw new IllegalStateException("should run in a HandlerThread");
