@@ -5,18 +5,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.morteza.screen.R
+import com.morteza.screen.common.BaseFragment
+
 /**
  * @author Morteza
  * @version 2019/12/3
  */
 @Deprecated("This Activity Will Be Removed ...")
-class ToolsFragment : Fragment() {
+class ToolsFragment : BaseFragment() {
 
     private lateinit var toolsViewModel: ToolsViewModel
+    override fun getFragmentName() = "ToolsFragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,

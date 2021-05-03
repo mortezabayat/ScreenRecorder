@@ -29,7 +29,12 @@ public class Constants {
      * Intent key (Cutout safe area)
      */
     public static final String EXTRA_CUTOUT_SAFE_AREA = "cutout_safe_area";
+    public static final String VIDEO_PATH = "VIDEO_PATH";
+
     public static final String HOME_UI = "HOME_UI";
     public static final String SETTING_UI = "SETTING_UI";
     public static final String PAINTER_UI = "PAINTER_UI";
+    public static final String VIDEO_RESULT_UI = "VIDEO_RESULT_UI";
+
+    public static final String CURRENT_UI = "CURRENT_UI";
 }

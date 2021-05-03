@@ -10,7 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
  */
 abstract public class BaseActivity extends AppCompatActivity {
 
-   public abstract String TAG();
+    public abstract String TAG();
+
+    public boolean VERBOSE = true;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

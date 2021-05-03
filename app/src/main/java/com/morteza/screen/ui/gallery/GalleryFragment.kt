@@ -5,18 +5,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.morteza.screen.R
+import com.morteza.screen.common.BaseFragment
+
 /**
  * @author Morteza
  * @version 2019/12/3
  */
 @Deprecated("This Activity Will Be Removed ...")
-class GalleryFragment : Fragment() {
+class GalleryFragment : BaseFragment() {
 
     private lateinit var galleryViewModel: GalleryViewModel
+    override fun getFragmentName() = "GalleryFragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,11 +27,11 @@ class GalleryFragment : Fragment() {
     ): View? {
         galleryViewModel =
             ViewModelProviders.of(this).get(GalleryViewModel::class.java)
-        val root = inflater.inflate(R.layout.fragment_gallery, container, false)
-        val textView: TextView = root.findViewById(R.id.text_gallery)
-        galleryViewModel.text.observe(this, Observer {
-            textView.text = it
-        })
+        val root = inflater.inflate(R.layout.activity_dialog, container, false)
+//        val textView: TextView = root.findViewById(R.id.text_gallery)
+//        galleryViewModel.text.observe(this, Observer {
+//            textView.text = it
+//        })
         return root
     }
 }

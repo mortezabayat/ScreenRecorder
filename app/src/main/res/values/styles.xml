@@ -42,11 +42,23 @@
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item> <!-- Or any transparency or color you need -->
         <item name="android:windowBackground">@null</item>
-<!--
-        @drawable/background_splash
--->
+        <!--
+                @drawable/background_splash
+        -->
     </style>
 
+    <style name="DialogTheme" parent="Theme.AppCompat">
+<!--        <item name="android:windowFrame">@null</item>-->
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+<!--        <item name="android:background">@null</item>-->
+<!--        <item name="android:windowBackground">@null</item>-->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
@@ -61,6 +73,7 @@
         <item name="android:elevation">6dp</item>
         <item name="android:outlineProvider">paddedBounds</item>
     </style>
+
     <style name="CircleReadButtonStyle">
         <item name="android:layout_width">@dimen/floating_icon_size</item>
         <item name="android:layout_height">@dimen/floating_icon_size</item>
@@ -70,6 +83,7 @@
         <item name="android:elevation">6dp</item>
         <item name="android:outlineProvider">paddedBounds</item>
     </style>
+
     <style name="CircleMainButtonStyle">
         <item name="android:layout_width">@dimen/floating_main_icon_size</item>
         <item name="android:layout_height">@dimen/floating_main_icon_size</item>

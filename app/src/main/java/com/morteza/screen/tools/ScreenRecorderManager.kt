@@ -1,6 +1,5 @@
 package com.morteza.screen.tools
 
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Point
@@ -15,6 +14,7 @@ import android.os.StrictMode
 import com.morteza.screen.R
 import com.morteza.screen.ScreenApp
 import com.morteza.screen.common.Constants.VIDEO_OUT_DIR_NAME
+import com.morteza.screen.common.UiNavigationManager
 import com.morteza.screen.common.toast
 import com.morteza.screen.services.helper.FloatingUiHelper
 import com.morteza.screen.services.helper.FloatingUiHelperInterface
@@ -218,16 +218,16 @@ class ScreenRecorderManager(
         stopRecorder()
     }
 
-    private fun viewResult(file: File) {
-        val view = Intent(Intent.ACTION_VIEW)
-        view.addCategory(Intent.CATEGORY_DEFAULT)
-        view.setDataAndType(Uri.fromFile(file), ScreenRecorder.VIDEO_AVC)
-        view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        try {
-            mContext.startActivity(view)
-        } catch (e: ActivityNotFoundException) { // no activity can open this video
-        }
-    }
+//    private fun viewResult(file: File) {
+//        val view = Intent(Intent.ACTION_VIEW)
+//        view.addCategory(Intent.CATEGORY_DEFAULT)
+//        view.setDataAndType(Uri.fromFile(file), ScreenRecorder.VIDEO_AVC)
+//        view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//        try {
+//            mContext.startActivity(view)
+//        } catch (e: ActivityNotFoundException) { // no activity can open this video
+//        }
+//    }
 
     override fun onFinishFloatingView() {
         callbacks.stopService()
@@ -244,8 +244,9 @@ class ScreenRecorderManager(
         val vmPolicy = StrictMode.getVmPolicy()
         try { // disable detecting FileUriExposure on public file
             mVideoPath?.let {
+                UiNavigationManager.getInstance().showRecorderResult(it.absolutePath)
                 StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().build())
-                viewResult(it)
+//                viewResult(it)
             }
         } finally {
             StrictMode.setVmPolicy(vmPolicy)
@@ -276,10 +277,11 @@ class ScreenRecorderManager(
             mVideoPath?.delete()
         } else {
             mVideoPath?.let {
-                val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                    .addCategory(Intent.CATEGORY_DEFAULT)
-                    .setData(Uri.fromFile(it))
-                mContext.sendBroadcast(intent)
+                UiNavigationManager.getInstance().showRecorderResult(it.absolutePath)
+//                val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+//                    .addCategory(Intent.CATEGORY_DEFAULT)
+//                    .setData(Uri.fromFile(it))
+//                mContext.sendBroadcast(intent)
             }
         }
     }

@@ -95,6 +95,7 @@ public class SplashActivity extends AppCompatActivity implements CountDownAnimat
                 ExtensionKt.askOverlayPermission(this);
             }
         }
+        setFinishOnTouchOutside(false);
     }
 
     private void init() {

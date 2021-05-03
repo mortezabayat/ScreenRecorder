@@ -9,15 +9,18 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.morteza.screen.R
+import com.morteza.screen.common.BaseFragment
+
 /**
  * @author Morteza
  * @version 2019/12/3
  */
 @Deprecated("This Activity Will Be Removed ...")
 
-class HomeFragment : Fragment() {
+class HomeFragment : BaseFragment() {
 
     private lateinit var homeViewModel: HomeViewModel
+    override fun getFragmentName() = "HomeFragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
