@@ -9,6 +9,6 @@
     <dimen name="fab_margin">16dp</dimen>
 
     <dimen name="radius">80dp</dimen>
-    <dimen name="floating_icon_size">40sp</dimen>
+    <dimen name="floating_icon_size">42sp</dimen>
     <dimen name="floating_main_icon_size">48sp</dimen>
 </resources>

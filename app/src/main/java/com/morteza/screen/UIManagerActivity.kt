@@ -4,12 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
-import com.morteza.screen.common.BaseActivity
-import com.morteza.screen.common.BaseFragment
+import com.morteza.screen.common.base.BaseActivity
+import com.morteza.screen.common.base.BaseFragment
 import com.morteza.screen.common.Constants
 import com.morteza.screen.ui.gallery.GalleryFragment
 import com.morteza.screen.ui.home.HomeFragment
-import com.morteza.screen.ui.previewsvideo.PreviewsVideo
 import com.morteza.screen.ui.tools.ToolsFragment
 
 /**
@@ -57,7 +56,6 @@ class UIManagerActivity : BaseActivity() {
                 startFragment(GalleryFragment())
             }
             Constants.VIDEO_RESULT_UI -> {
-
             }
         }
     }

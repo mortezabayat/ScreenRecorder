@@ -11,9 +11,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.SystemClock;
 import android.text.format.DateUtils;
+import android.widget.RemoteViews;
+
+import androidx.core.app.NotificationCompat;
 
 import com.morteza.screen.BuildConfig;
 import com.morteza.screen.R;
+import com.morteza.screen.services.helper.FloatingUiHelperInterface;
 
 import static android.os.Build.VERSION_CODES.O;
 
@@ -28,42 +32,63 @@ public class Notifications extends ContextWrapper {
 
     private long mLastFiredTime = 0;
     private NotificationManager mManager;
-    private Notification.Action mStopAction;
-    private Notification.Builder mBuilder;
+    private NotificationCompat.Action mStopAction;
+    private NotificationCompat.Builder mBuilder;
+    private Notification mNotification;
+    private final RemoteViews normalContentView;
+    private FloatingUiHelperInterface.FloatingUiControl mScreenRecordControl;
 
-    public Notifications(Context context) {
+
+    public Notifications(Context context
+            ,FloatingUiHelperInterface.FloatingUiControl callback) {
         super(context);
+        mScreenRecordControl = callback;
+        normalContentView = new RemoteViews(getPackageName(), R.layout.notification_normal);
+
+
         if (Build.VERSION.SDK_INT >= O) {
             createNotificationChannel();
         }
+
+        getNotification();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//            normalContentView.setOnClickResponse( , new RemoteViews.RemoteResponse());
+        }
+    }
+
+    public Notification getNotification() {
+        if (mNotification == null) {
+            mNotification = getBuilder()
+//                    .setContentText(getString(R.string.length_video))
+                    .build();
+        }
+        return mNotification;
     }
 
     public void recording(long timeMs) {
         if (SystemClock.elapsedRealtime() - mLastFiredTime < 1000) {
             return;
         }
-        Notification notification = getBuilder()
-                .setContentText(getString(R.string.length_video)+" " + DateUtils.formatElapsedTime(timeMs / 1000))
-                .build();
-        getNotificationManager().notify(id, notification);
+        if (mNotification == null) {
+            mNotification = getBuilder()
+//                    .setContentText(getString(R.string.length_video) + " " + DateUtils.formatElapsedTime(timeMs / 1000))
+                    .build();
+        }
+        getNotificationManager().notify(id, mNotification);
         mLastFiredTime = SystemClock.elapsedRealtime();
     }
 
-    private Notification.Builder getBuilder() {
+    private NotificationCompat.Builder getBuilder() {
         if (mBuilder == null) {
-            Notification.Builder builder = new Notification.Builder(this)
-                    .setContentTitle(getString(R.string.gravando))
+            mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
                     .setOngoing(true)
                     .setLocalOnly(true)
                     .setOnlyAlertOnce(true)
-                    .addAction(stopAction())
+                    .setContent(normalContentView)
+//                    .addAction(stopAction())
                     .setWhen(System.currentTimeMillis())
                     .setSmallIcon(R.mipmap.ic_launcher);
-            if (Build.VERSION.SDK_INT >= O) {
-                builder.setChannelId(CHANNEL_ID)
-                        .setUsesChronometer(true);
-            }
-            mBuilder = builder;
         }
         return mBuilder;
     }
@@ -75,18 +100,20 @@ public class Notifications extends ContextWrapper {
         channel.setShowBadge(false);
         getNotificationManager().createNotificationChannel(channel);
     }
+
     static final String ACTION_STOP = BuildConfig.APPLICATION_ID + ".action.STOP";
-    public Notification.Action stopAction() {
+
+    public NotificationCompat.Action stopAction() {
         if (mStopAction == null) {
             Intent intent = new Intent(ACTION_STOP).setPackage(getPackageName());
             PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1,
                     intent, PendingIntent.FLAG_ONE_SHOT);
-            mStopAction = new Notification.Action(android.R.drawable.ic_media_pause, getString(R.string.stop), pendingIntent);
+            mStopAction = new NotificationCompat.Action(android.R.drawable.ic_media_pause, getString(R.string.stop), pendingIntent);
         }
         return mStopAction;
     }
 
-   public void clear() {
+    public void clear() {
         mLastFiredTime = 0;
         mBuilder = null;
         mStopAction = null;
@@ -99,4 +126,5 @@ public class Notifications extends ContextWrapper {
         }
         return mManager;
     }
+
 }

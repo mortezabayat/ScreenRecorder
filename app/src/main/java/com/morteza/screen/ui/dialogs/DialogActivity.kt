@@ -2,10 +2,9 @@ package com.morteza.screen.ui.dialogs
 
 import android.os.Bundle
 import android.util.Log
-import android.view.WindowManager
 import com.morteza.screen.R
-import com.morteza.screen.common.BaseActivity
-import com.morteza.screen.common.BaseFragment
+import com.morteza.screen.common.base.BaseActivity
+import com.morteza.screen.common.base.BaseFragment
 import com.morteza.screen.common.Constants
 import com.morteza.screen.ui.previewsvideo.PreviewsVideo
 
@@ -21,15 +20,10 @@ class DialogActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dialog)
-
         setFinishOnTouchOutside(false)
-//        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
         val videoPath = intent.extras?.getString(Constants.VIDEO_PATH)
-
         if (VERBOSE) {
-            Log.e(
-                TAG(), "Bundle Info ${intent.extras?.getString(Constants.CURRENT_UI)} \n $videoPath"
-            )
+            Log.e(TAG(), "Bundle Info ${intent.extras?.getString(Constants.CURRENT_UI)} \n $videoPath")
         }
         videoPath?.let {
             startFragment(PreviewsVideo.newInstance(videoPath))

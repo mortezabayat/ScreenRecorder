@@ -56,7 +56,7 @@ internal class FloatingView
     /**
      * WindowManager
      */
-    private val mWindowManager: WindowManager
+    private val mWindowManager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
     /**
      * LayoutParams
@@ -64,7 +64,7 @@ internal class FloatingView
     /**
      * WindowManager.LayoutParamsを取得します。
      */
-    val windowLayoutParams: WindowManager.LayoutParams
+    val windowLayoutParams: WindowManager.LayoutParams = WindowManager.LayoutParams()
 
     /**
      * VelocityTracker
@@ -104,7 +104,7 @@ internal class FloatingView
     /**
      * DisplayMetrics
      */
-    private val mMetrics: DisplayMetrics
+    private val mMetrics: DisplayMetrics = DisplayMetrics()
 
     /**
      * 押下処理を通過しているかチェックするための時間
@@ -328,10 +328,7 @@ internal class FloatingView
     internal annotation class AnimationState
 
     init {
-        mWindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        windowLayoutParams = WindowManager.LayoutParams()
-        mMetrics = DisplayMetrics()
-        mWindowManager.defaultDisplay.getMetrics(mMetrics)
+        mWindowManager.defaultDisplay.getRealMetrics(mMetrics)
         windowLayoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
         windowLayoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
         windowLayoutParams.type = OVERLAY_TYPE
@@ -616,7 +613,7 @@ internal class FloatingView
         val oldPositionLimitHeight = mPositionLimitRect.height()
 
         // 新しい座標情報に切替
-        mWindowManager.defaultDisplay.getMetrics(mMetrics)
+        mWindowManager.defaultDisplay.getRealMetrics(mMetrics)
         val width = measuredWidth
         val height = measuredHeight
         val newScreenWidth = mMetrics.widthPixels

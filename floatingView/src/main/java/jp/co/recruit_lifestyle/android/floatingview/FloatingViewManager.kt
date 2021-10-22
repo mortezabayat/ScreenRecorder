@@ -572,7 +572,7 @@ class FloatingViewManager
             floatingViewY = FloatingView.DEFAULT_Y
             floatingViewWidth = FloatingView.DEFAULT_WIDTH
             floatingViewHeight = FloatingView.DEFAULT_HEIGHT
-            moveDirection = MOVE_DIRECTION_DEFAULT
+            moveDirection = MOVE_DIRECTION_NEAREST
             usePhysics = true
             animateInitialMove = true
         }
@@ -586,7 +586,8 @@ class FloatingViewManager
     private fun rewritePositionY() {
         val isFinishing = mTargetFloatingView!!.state == FloatingView.STATE_FINISHING
         val params = mTargetFloatingView!!.windowLayoutParams
-        mFloatingViewListener!!.onTouchFinished(isFinishing, params.x, mTargetFloatingView!!.heightLimit - params.y)
+        mFloatingViewListener!!.onTouchFinished(isFinishing,
+            params.x, mTargetFloatingView!!.heightLimit - params.y)
     }
 
     companion object {
@@ -651,9 +652,12 @@ class FloatingViewManager
          * @return Safe cutout insets.
          */
         fun findCutoutSafeArea(activity: Activity): Rect {
-            val safeInsetRect = Rect()
+            val safeInsetRect = Rect(0,activity.window.decorView.rootView.height ,
+                activity.window.decorView.rootView.height,0)
             // TODO:Rewrite with android-x
             // TODO:Consider alternatives
+
+
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
                 return safeInsetRect
             } else {

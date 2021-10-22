@@ -22,7 +22,7 @@ public class DisplayInfo implements Parcelable {
         this.metrics = new DisplayMetrics();
         Point size = new Point();
         Display display = wm.getDefaultDisplay();
-        display.getMetrics(metrics);
+        display.getRealMetrics(metrics);
         display.getRealSize(size);
         this.x = size.x;
         this.y = size.y;

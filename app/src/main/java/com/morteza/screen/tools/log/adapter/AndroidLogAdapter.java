@@ -1,0 +1,25 @@
+package com.morteza.screen.tools.log.adapter;
+
+import com.morteza.screen.tools.log.LogAdapter;
+
+public class AndroidLogAdapter implements LogAdapter {
+
+    private final FormatStrategy formatStrategy;
+
+    public AndroidLogAdapter() {
+        this.formatStrategy = PrettyFormatStrategy.newBuilder().build();
+    }
+
+    public AndroidLogAdapter(FormatStrategy formatStrategy) {
+        this.formatStrategy = formatStrategy;
+    }
+
+    @Override public boolean isLoggable(int priority, String tag) {
+        return true;
+    }
+
+    @Override public void log(int priority, String tag, String message) {
+        formatStrategy.log(priority, tag, message);
+    }
+
+}

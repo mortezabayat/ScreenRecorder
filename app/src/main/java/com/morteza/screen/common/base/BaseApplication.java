@@ -1,8 +1,9 @@
-package com.morteza.screen.common;
+package com.morteza.screen.common.base;
 
 import android.app.Activity;
 import android.app.Application;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.projection.MediaProjection;
@@ -12,8 +13,11 @@ import android.os.IBinder;
 import android.os.Messenger;
 import android.util.Log;
 
+import androidx.multidex.MultiDex;
+
 import com.morteza.screen.ScreenApp;
 import com.morteza.screen.SplashActivity;
+import com.morteza.screen.common.Constants;
 
 public abstract class BaseApplication extends Application {
     protected static Handler mHandler;
@@ -64,7 +68,6 @@ public abstract class BaseApplication extends Application {
     }
 
     public static void setHandler(Handler handler) {
-
         mHandler = handler;
     }
 
@@ -90,6 +93,12 @@ public abstract class BaseApplication extends Application {
         mSplashActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mSplashActivityIntent.putExtra(Constants.SEND_REQUEST_MEDIA_PROJECTION, true);
         getInstance().getApplicationContext().startActivity(mSplashActivityIntent);
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
     }
 
 

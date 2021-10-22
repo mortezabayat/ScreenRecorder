@@ -1,4 +1,4 @@
-package com.morteza.screen.common;
+package com.morteza.screen.common.base;
 
 import android.os.Bundle;
 

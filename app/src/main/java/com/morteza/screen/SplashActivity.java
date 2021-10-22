@@ -29,7 +29,8 @@ import static com.morteza.screen.ScreenApp.setScreenshotPermission;
  * @author Morteza
  * @version 2019/12/3
  */
-public class SplashActivity extends AppCompatActivity implements CountDownAnimation.CountDownListener {
+public class SplashActivity extends AppCompatActivity
+        implements CountDownAnimation.CountDownListener {
 
     private final String TAG = "SplashActivity";
     private CountDownAnimation countDownAnimation;
@@ -74,7 +75,7 @@ public class SplashActivity extends AppCompatActivity implements CountDownAnimat
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == Constants.REQUEST_ID_ALL_PERMISSIONS) {
-            boolean isAllGranted = PermissionManager.handelAllPermissionsRequestResult(permissions, grantResults);
+            boolean isAllGranted = PermissionManager.handleAllPermissionsRequestResult(permissions, grantResults);
             if (isAllGranted) {
                 init();
             } else {
@@ -86,6 +87,7 @@ public class SplashActivity extends AppCompatActivity implements CountDownAnimat
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setFinishOnTouchOutside(true);
+
         if (ExtensionKt.hasWriteStoragePermission(this)) {
             init();
         } else {
@@ -139,7 +141,6 @@ public class SplashActivity extends AppCompatActivity implements CountDownAnimat
             countDownAnimation.setAnimation(animationSet);
 
             // Customizable start count
-//            countDownAnimation.setStartCount(/*getStartCount()*/4);
             countDownAnimation.start();
         });
     }

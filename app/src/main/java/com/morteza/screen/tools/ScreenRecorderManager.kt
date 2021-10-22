@@ -1,5 +1,6 @@
 package com.morteza.screen.tools
 
+import android.app.Notification
 import android.content.Context
 import android.content.Intent
 import android.graphics.Point
@@ -8,7 +9,6 @@ import android.hardware.display.VirtualDisplay
 import android.media.MediaCodecInfo
 import android.media.MediaCodecList
 import android.media.projection.MediaProjection
-import android.net.Uri
 import android.os.Environment
 import android.os.StrictMode
 import com.morteza.screen.R
@@ -36,13 +36,15 @@ class ScreenRecorderManager(
     private var mVideoPath: File? = null
     private var mStartTime: Long = 0
 
-    private var mNotifications: Notifications? = null
+    private val mNotifications by lazy { Notifications(mContext, this) }
     private val mFloatingUiHelper by lazy { FloatingUiHelper(mContext, this) }
 
     private var mVideoRecorder: ScreenRecorder? = null
     private var mVirtualDisplay: VirtualDisplay? = null
     private var mAvcCodecInfoList: Array<MediaCodecInfo> = emptyArray()
     private var mAacCodecInfoList: Array<MediaCodecInfo> = emptyArray()
+    private var mRunForegroundMode: Boolean = false
+
     private val mProjectionCallback: MediaProjection.Callback =
         object : MediaProjection.Callback() {
             override fun onStop() {
@@ -52,10 +54,9 @@ class ScreenRecorderManager(
             }
         }
 
-    fun initializing(intent: Intent) {
+    fun initializing(intent: Intent, isForegroundMode: Boolean = true) {
 
-        mNotifications = Notifications(mContext)
-
+        this.mRunForegroundMode = isForegroundMode
         if (!mFloatingUiHelper.mIsViewAddToWindowManager) {
             Utils.findEncodersByTypeAsync(ScreenRecorder.VIDEO_AVC) {
                 Utils.logCodecInfoList(it, ScreenRecorder.VIDEO_AVC, TAG)
@@ -71,6 +72,7 @@ class ScreenRecorderManager(
         }
     }
 
+    fun getNotifications(): Notification = mNotifications.notification
 
     fun destroyView() {
         destroy()
@@ -263,14 +265,13 @@ class ScreenRecorderManager(
         mFloatingUiHelper.mHaveActiveRecording = false
         mVideoRecorder?.quit()
         mVideoRecorder = null
-        mNotifications?.clear()
+        mNotifications.clear()
         mFloatingUiHelper.unregisterReceiver()
     }
 
     override fun onStop(error: Throwable?) {
         mStartTime = 0
-        mNotifications?.clear()
-
+        mNotifications.clear()
         if (error != null) {
             mContext.toast("Recorder error ! See logcat for more details")
             error.printStackTrace()
@@ -288,9 +289,10 @@ class ScreenRecorderManager(
 
     override fun onStart() {
         mFloatingUiHelper.mHaveActiveRecording = true
-        mNotifications?.stopAction()
+        //mNotifications.stopAction()
         mStartTime = 0
-        mNotifications!!.recording(mStartTime)
+//        mNotifications.setRunForegroundMod(mRunForegroundMode)
+        //mNotifications.recording(mStartTime)
     }
 
     override fun onRecording(presentationTimeUs: Long) {
@@ -298,6 +300,6 @@ class ScreenRecorderManager(
             mStartTime = presentationTimeUs
         }
         val time = (presentationTimeUs - mStartTime) / 1000
-        mNotifications!!.recording(time)
+        mNotifications.recording(time)
     }
 }

@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.morteza.screen.R
-import com.morteza.screen.common.BaseFragment
+import com.morteza.screen.common.base.BaseFragment
 
 /**
  * @author Morteza

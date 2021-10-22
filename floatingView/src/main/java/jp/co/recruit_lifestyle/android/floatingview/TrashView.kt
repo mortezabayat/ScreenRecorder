@@ -200,7 +200,7 @@ internal class TrashView
     internal annotation class AnimationState
 
     init {
-        mWindowManager.defaultDisplay.getMetrics(mMetrics)
+        mWindowManager.defaultDisplay.getRealMetrics(mMetrics)
         mAnimationHandler = AnimationHandler(this)
         mIsEnabled = true
 
@@ -292,7 +292,7 @@ internal class TrashView
      * 画面サイズから自位置を決定します。
      */
     private fun updateViewLayout() {
-        mWindowManager.defaultDisplay.getMetrics(mMetrics)
+        mWindowManager.defaultDisplay.getRealMetrics(mMetrics)
         windowLayoutParams.x = (mMetrics.widthPixels - width) / 2
         windowLayoutParams.y = 0
 
@@ -502,76 +502,26 @@ internal class TrashView
             mAnimationHandler.updateTargetPosition(x, y)
             // まだオープンアニメーションが開始していない場合のみ実行
             if (!mAnimationHandler.isAnimationStarted(ANIMATION_OPEN)) {
-                // 長押しのメッセージを削除
                 mAnimationHandler.removeMessages(ANIMATION_OPEN)
-                // オープン
                 mAnimationHandler.sendAnimationMessage(ANIMATION_OPEN)
             }
         } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-            // 長押しのメッセージを削除
             mAnimationHandler.removeMessages(ANIMATION_OPEN)
             mAnimationHandler.sendAnimationMessage(ANIMATION_CLOSE)
-        }// 押上、キャンセル
-        // 移動
+        }
     }
 
-    /**
-     * アニメーションの制御を行うハンドラです。
-     */
     internal class AnimationHandler
-    /**
-     * コンストラクタ
-     */
     (trashView: TrashView) : Handler() {
-
-        /**
-         * アニメーションを開始した時間
-         */
         private var mStartTime: Long = 0
-
-        /**
-         * アニメーションを始めた時点のアルファ値
-         */
         private var mStartAlpha: Float = 0.toFloat()
-
-        /**
-         * アニメーションを始めた時点のTransitionY
-         */
         private var mStartTransitionY: Float = 0.toFloat()
-
-        /**
-         * 実行中のアニメーションのコード
-         */
         private var mStartedCode: Int = 0
-
-        /**
-         * 追従対象のX座標
-         */
         private var mTargetPositionX: Float = 0.toFloat()
-
-        /**
-         * 追従対象のY座標
-         */
         private var mTargetPositionY: Float = 0.toFloat()
-
-        /**
-         * 追従対象の幅
-         */
         var mTargetWidth: Float = 0.toFloat()
-
-        /**
-         * 追従対象の高さ
-         */
         var mTargetHeight: Float = 0.toFloat()
-
-        /**
-         * 削除アイコンの移動限界位置
-         */
         private val mTrashIconLimitPosition: Rect
-
-        /**
-         * Y軸の追従の範囲
-         */
         private var mMoveStickyYRange: Float = 0.toFloat()
 
         /**
@@ -591,9 +541,6 @@ internal class TrashView
             mOvershootInterpolator = OvershootInterpolator(OVERSHOOT_TENSION)
         }
 
-        /**
-         * アニメーションの処理を行います。
-         */
         override fun handleMessage(msg: Message) {
             val trashView = mTrashView.get()
             if (trashView == null) {
@@ -603,7 +550,6 @@ internal class TrashView
                 return
             }
 
-            // 有効でない場合はアニメーションを行わない
             if (!trashView.isTrashEnabled) {
                 return
             }
@@ -616,7 +562,6 @@ internal class TrashView
             val screenWidth = trashView.mMetrics.widthPixels.toFloat()
             val trashViewX = trashView.windowLayoutParams.x.toFloat()
 
-            // アニメーションを開始した場合の初期化
             if (animationType == TYPE_FIRST) {
                 mStartTime = SystemClock.uptimeMillis()
                 mStartAlpha = backgroundView.alpha
@@ -624,28 +569,20 @@ internal class TrashView
                 mStartedCode = animationCode
                 listener?.onTrashAnimationStarted(mStartedCode)
             }
-            // 経過時間
             val elapsedTime = (SystemClock.uptimeMillis() - mStartTime).toFloat()
 
-            // 表示アニメーション
             if (animationCode == ANIMATION_OPEN) {
                 val currentAlpha = backgroundView.alpha
-                // 最大のアルファ値に達していない場合
                 if (currentAlpha < MAX_ALPHA) {
                     val alphaTimeRate = min(elapsedTime / BACKGROUND_DURATION_MILLIS, 1.0f)
                     val alpha = min(mStartAlpha + alphaTimeRate, MAX_ALPHA)
                     backgroundView.alpha = alpha
                 }
 
-                // DelayTimeを超えていたらアニメーション開始
                 if (elapsedTime >= TRASH_OPEN_START_DELAY_MILLIS) {
                     val screenHeight = trashView.mMetrics.heightPixels.toFloat()
-                    // アイコンが左右に全部はみ出たらそれぞれ0%、100%の計算
                     val positionX = trashViewX + (mTargetPositionX + mTargetWidth) / (screenWidth + mTargetWidth) * mTrashIconLimitPosition.width() + mTrashIconLimitPosition.left.toFloat()
-                    // 削除アイコンのY座標アニメーションと追従（上方向がマイナス）
-                    // targetPositionYRateは、ターゲットのY座標が完全に画面外になると0%、画面の半分以降は100%
-                    // stickyPositionYは移動限界の下端が原点で上端まで移動する。mMoveStickyRangeが追従の範囲
-                    // positionYの計算により時間経過とともに移動する
+
                     val targetPositionYRate = min(2 * (mTargetPositionY + mTargetHeight) / (screenHeight + mTargetHeight), 1.0f)
                     val stickyPositionY = mMoveStickyYRange * targetPositionYRate + mTrashIconLimitPosition.height() - mMoveStickyYRange
                     val translationYTimeRate = min((elapsedTime - TRASH_OPEN_START_DELAY_MILLIS) / TRASH_OPEN_DURATION_MILLIS, 1.0f)
@@ -657,20 +594,16 @@ internal class TrashView
 
                 sendMessageAtTime(newMessage(animationCode, TYPE_UPDATE), SystemClock.uptimeMillis() + ANIMATION_REFRESH_TIME_MILLIS)
             } else if (animationCode == ANIMATION_CLOSE) {
-                // アルファ値の計算
                 val alphaElapseTimeRate = min(elapsedTime / BACKGROUND_DURATION_MILLIS, 1.0f)
                 val alpha = max(mStartAlpha - alphaElapseTimeRate, MIN_ALPHA)
                 backgroundView.alpha = alpha
 
-                // 削除アイコンのY座標アニメーション
                 val translationYTimeRate = min(elapsedTime / TRASH_CLOSE_DURATION_MILLIS, 1.0f)
-                // アニメーションが最後まで到達していない場合
                 if (alphaElapseTimeRate < 1.0f || translationYTimeRate < 1.0f) {
                     val position = mStartTransitionY + mTrashIconLimitPosition.height() * translationYTimeRate
                     trashIconRootView.translationY = position
                     sendMessageAtTime(newMessage(animationCode, TYPE_UPDATE), SystemClock.uptimeMillis() + ANIMATION_REFRESH_TIME_MILLIS)
                 } else {
-                    // 位置を強制的に調整
                     trashIconRootView.translationY = mTrashIconLimitPosition.bottom.toFloat()
                     mStartedCode = ANIMATION_NONE
                     listener?.onTrashAnimationEnd(ANIMATION_CLOSE)
@@ -680,57 +613,26 @@ internal class TrashView
                 trashIconRootView.translationY = mTrashIconLimitPosition.bottom.toFloat()
                 mStartedCode = ANIMATION_NONE
                 listener?.onTrashAnimationEnd(ANIMATION_FORCE_CLOSE)
-            }// 即時非表示
-            // 非表示アニメーション
+            }
         }
 
-        /**
-         * アニメーションのメッセージを送信します。
-         *
-         * @param animation   ANIMATION_OPEN,ANIMATION_CLOSE,ANIMATION_FORCE_CLOSE
-         * @param delayMillis メッセージの送信時間
-         */
         fun sendAnimationMessageDelayed(animation: Int, delayMillis: Long) {
             sendMessageAtTime(newMessage(animation, TYPE_FIRST), SystemClock.uptimeMillis() + delayMillis)
         }
-
-        /**
-         * アニメーションのメッセージを送信します。
-         *
-         * @param animation ANIMATION_OPEN,ANIMATION_CLOSE,ANIMATION_FORCE_CLOSE
-         */
         fun sendAnimationMessage(animation: Int) {
             sendMessage(newMessage(animation, TYPE_FIRST))
         }
 
-        /**
-         * アニメーションが開始しているかどうかチェックします。
-         *
-         * @param animationCode アニメーションコード
-         * @return アニメーションが開始していたらtrue.そうでなければfalse
-         */
         fun isAnimationStarted(animationCode: Int): Boolean {
             return mStartedCode == animationCode
         }
-
-        /**
-         * 追従対象の位置情報を更新します。
-         *
-         * @param x 追従対象のX座標
-         * @param y 追従対象のY座標
-         */
         fun updateTargetPosition(x: Float, y: Float) {
             mTargetPositionX = x
             mTargetPositionY = y
         }
 
-        /**
-         * Viewの表示状態が変更された際に呼び出されます。
-         */
         fun onUpdateViewLayout() {
             val trashView = mTrashView.get() ?: return
-// 削除アイコン(TrashIconRootView)の移動限界設定(Gravityの基準位置を元に計算）
-            // 左下原点（画面下端（パディング含む）：0、上方向：マイナス、下方向：プラス）で、Y軸上限は削除アイコンが背景の中心に来る位置、下限はTrashIconRootViewが全部隠れる位置
             val density = trashView.mMetrics.density
             val backgroundHeight = trashView.mBackgroundView.measuredHeight.toFloat()
             val offsetX = TRASH_MOVE_LIMIT_OFFSET_X * density
@@ -739,70 +641,21 @@ internal class TrashView
             val top = ((trashIconHeight - backgroundHeight) / 2 - TRASH_MOVE_LIMIT_TOP_OFFSET * density).toInt()
             val right = offsetX.toInt()
             mTrashIconLimitPosition.set(left, top, right, trashIconHeight)
-
-            // 背景の大きさをもとにY軸の追従範囲を設定
             mMoveStickyYRange = backgroundHeight * 0.20f
         }
 
         companion object {
-
-            /**
-             * アニメーションをリフレッシュするミリ秒
-             */
             private const val ANIMATION_REFRESH_TIME_MILLIS = 10L
-
-            /**
-             * 背景のアニメーション時間
-             */
             private const val BACKGROUND_DURATION_MILLIS = 200L
-
-            /**
-             * 削除アイコンのポップアニメーションの開始遅延時間
-             */
             private const val TRASH_OPEN_START_DELAY_MILLIS = 200L
-
-            /**
-             * 削除アイコンのオープンアニメーション時間
-             */
             private const val TRASH_OPEN_DURATION_MILLIS = 400L
-
-            /**
-             * 削除アイコンのクローズアニメーション時間
-             */
             private const val TRASH_CLOSE_DURATION_MILLIS = 200L
-
-            /**
-             * Overshootアニメーションの係数
-             */
             private const val OVERSHOOT_TENSION = 1.0f
-
-            /**
-             * 削除アイコンの移動限界X軸オフセット(dp)
-             */
             private const val TRASH_MOVE_LIMIT_OFFSET_X = 22
-
-            /**
-             * 削除アイコンの移動限界Y軸オフセット(dp)
-             */
             private const val TRASH_MOVE_LIMIT_TOP_OFFSET = -4
-
-            /**
-             * アニメーション開始を表す定数
-             */
             private const val TYPE_FIRST = 1
-            /**
-             * アニメーション更新を表す定数
-             */
             private const val TYPE_UPDATE = 2
-
-            /**
-             * アルファの最大値
-             */
             private const val MAX_ALPHA = 1.0f
-
-            /**
-             * アルファの最小値
-             */
             private const val MIN_ALPHA = 0.0f
 
             /**
@@ -815,7 +668,6 @@ internal class TrashView
             }
 
             /**
-             * 送信するメッセージを生成します。
              *
              * @param animation ANIMATION_OPEN,ANIMATION_CLOSE,ANIMATION_FORCE_CLOSE
              * @param type      TYPE_FIRST,TYPE_UPDATE
@@ -832,47 +684,14 @@ internal class TrashView
 
     companion object {
 
-        /**
-         * 背景の高さ(dp)
-         */
         private const val BACKGROUND_HEIGHT = 164
-
-        /**
-         * ターゲットを取り込む水平領域(dp)
-         */
         private const val TARGET_CAPTURE_HORIZONTAL_REGION = 30.0f
-
-        /**
-         * ターゲットを取り込む垂直領域(dp)
-         */
         private const val TARGET_CAPTURE_VERTICAL_REGION = 4.0f
-
-        /**
-         * 削除アイコンの拡大・縮小のアニメーション時間
-         */
         private const val TRASH_ICON_SCALE_DURATION_MILLIS = 200L
-
-        /**
-         * アニメーションなしの状態を表す定数
-         */
         const val ANIMATION_NONE = 0
-        /**
-         * 背景・削除アイコンなどを表示するアニメーションを表す定数<br></br>
-         * FloatingViewの追尾も含みます。
-         */
         const val ANIMATION_OPEN = 1
-        /**
-         * 背景・削除アイコンなどを消すアニメーションを表す定数
-         */
         const val ANIMATION_CLOSE = 2
-        /**
-         * 背景・削除アイコンなどを即時に消すことを表す定数
-         */
         const val ANIMATION_FORCE_CLOSE = 3
-
-        /**
-         * 長押し判定とする時間
-         */
         private val LONG_PRESS_TIMEOUT = ViewConfiguration.getLongPressTimeout()
 
         /**

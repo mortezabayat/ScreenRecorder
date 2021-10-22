@@ -50,7 +50,7 @@ public class PermissionManager {
         }
     }
 
-    public static boolean handelAllPermissionsRequestResult(@NonNull String[] permissions,
+    public static boolean handleAllPermissionsRequestResult(@NonNull String[] permissions,
                                                             @NonNull int[] grantResults) {
         if (grantResults.length <= 0) {
             return false;

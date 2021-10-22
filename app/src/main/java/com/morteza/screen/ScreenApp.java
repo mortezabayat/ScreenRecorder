@@ -8,14 +8,18 @@ import android.os.Build;
 import android.os.Message;
 import android.os.RemoteException;
 
-import com.morteza.screen.common.BaseApplication;
+import com.morteza.screen.common.base.BaseApplication;
 import com.morteza.screen.common.Constants;
 import com.morteza.screen.services.FloatingCircularMenuService;
+import com.morteza.screen.tools.log.Logger;
+import com.morteza.screen.tools.log.adapter.AndroidLogAdapter;
 
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
-
+/**
+ * @author Morteza
+ * @version 2019/12/3
+ */
 public class ScreenApp extends BaseApplication {
-
 
     public void sendObjectToFlattingMenuService() {
         if (!boundFlattingMenuService) return;
@@ -55,9 +59,11 @@ public class ScreenApp extends BaseApplication {
     @Override
     public void onCreate() {
         super.onCreate();
+        Logger.addLogAdapter(new AndroidLogAdapter());
         mMediaProjectionManager = (MediaProjectionManager)
                 getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         __Instance = this;
-    }
 
+        Logger.i("Create Instance Of %s Application." , getString(R.string.app_name));
+    }
 }
