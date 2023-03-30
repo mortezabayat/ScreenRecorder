@@ -52,7 +52,7 @@ dependencies {
 //    implementation 'com.bitvale:lavafab:1.0.1'
 //    implementation 'com.oguzdev:CircularFloatingActionMenu:1.0.2'
     implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation 'com.github.uin3566:AllAngleExpandableButton:v1.2.0'
+    implementation 'com.github.uin3566:AllAngleExpandableButton:1.0.0'
 
     implementation project(path: ':floatingView')
     implementation project(path: ':circularfloatingmenu')
