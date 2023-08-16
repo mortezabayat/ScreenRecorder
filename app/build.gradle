@@ -47,7 +47,7 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:4.15.1'
     implementation 'com.github.mortezabayat:tvedioconvetor:-SNAPSHOT'
-    implementation 'com.google.android.exoplayer:exoplayer:2.15.1'
+    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
 
 //    implementation 'com.bitvale:lavafab:1.0.1'
 //    implementation 'com.oguzdev:CircularFloatingActionMenu:1.0.2'
