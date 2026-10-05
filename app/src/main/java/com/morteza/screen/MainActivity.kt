@@ -1,8 +1,6 @@
 package com.morteza.screen
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
 import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.os.Build
@@ -14,13 +12,63 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.FiberManualRecord
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.HourglassBottom
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Slideshow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,7 +76,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.morteza.screen.model.*
+import com.morteza.screen.model.AppScreen
+import com.morteza.screen.model.AppThemeMode
+import com.morteza.screen.model.RecordingStatus
+import com.morteza.screen.model.VideoItem
 import com.morteza.screen.service.ScreenRecordService
 import com.morteza.screen.ui.components.CountDownOverlay
 import com.morteza.screen.ui.components.FloatingCircularMenu
@@ -37,8 +88,23 @@ import com.morteza.screen.ui.components.RecordingTimerOverlay
 import com.morteza.screen.ui.components.TouchIndicatorOverlay
 import com.morteza.screen.ui.components.VideoPlayerDialog
 import com.morteza.screen.ui.components.VideoTrimmingDialog
-import com.morteza.screen.ui.screens.*
-import com.morteza.screen.ui.theme.*
+import com.morteza.screen.ui.screens.GalleryScreen
+import com.morteza.screen.ui.screens.HomeScreen
+import com.morteza.screen.ui.screens.PainterScreen
+import com.morteza.screen.ui.screens.RecordingLimitsScreen
+import com.morteza.screen.ui.screens.ScheduleScreen
+import com.morteza.screen.ui.screens.SendScreen
+import com.morteza.screen.ui.screens.SettingsScreen
+import com.morteza.screen.ui.screens.ShareScreen
+import com.morteza.screen.ui.screens.SlideshowScreen
+import com.morteza.screen.ui.screens.StatisticsScreen
+import com.morteza.screen.ui.screens.ToolsScreen
+import com.morteza.screen.ui.theme.AccentOrange
+import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.DarkBackground
+import com.morteza.screen.ui.theme.ScreenTheme
+import com.morteza.screen.ui.theme.TealDark
+import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.util.ShareHelper
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
 import kotlinx.coroutines.launch
@@ -75,6 +141,7 @@ class MainActivity : ComponentActivity() {
             }
 
             ScreenTheme(darkTheme = isDark) {
+
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
                 val currentScreen by viewModel.currentScreen.collectAsState()
