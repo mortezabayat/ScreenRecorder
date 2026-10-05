@@ -1,0 +1,4 @@
+{
+  "name": "Screen Recorder",
+  "description": "Android Screen Recorder migrated to Jetpack Compose UI with screen capture, floating circular menu, canvas painter, video preview gallery, and encoder settings."
+}
