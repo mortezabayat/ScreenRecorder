@@ -40,6 +40,8 @@ fun HomeScreen(
     val isFloatingVisible by viewModel.isFloatingMenuVisible.collectAsState()
     val limitsConfig by viewModel.recordingLimitsConfig.collectAsState()
     val scheduledRecordings by viewModel.scheduledRecordings.collectAsState()
+    val batterySaverConfig by viewModel.batterySaverConfig.collectAsState()
+    val batteryState by viewModel.batteryState.collectAsState()
     var showQualityMenu by remember { mutableStateOf(false) }
 
     val isRecording = status == RecordingStatus.RECORDING || status == RecordingStatus.PAUSED
@@ -275,6 +277,52 @@ fun HomeScreen(
                         ) {
                             Icon(Icons.Default.Schedule, contentDescription = "Schedule", tint = TealPrimary)
                         }
+                    }
+                }
+            }
+        }
+
+        // Low Battery / Battery-Saver Active Alert Banner
+        if (batterySaverConfig.isEnabled && (batterySaverConfig.isBatterySaverActive || (batteryState.levelPercent <= batterySaverConfig.thresholdPercent && !batteryState.isCharging))) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.navigateTo(com.morteza.screen.model.AppScreen.SETTINGS) },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = AccentOrange.copy(alpha = 0.15f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AccentOrange)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(AccentOrange),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.BatteryAlert, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "⚡ Battery-Saver Active (${batteryState.levelPercent}%)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Lowered to ${videoConfig.resolution} @ ${videoConfig.framerate} FPS to prevent device shutdown",
+                                fontSize = 11.sp,
+                                color = Color.LightGray
+                            )
+                        }
+                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = AccentOrange)
                     }
                 }
             }

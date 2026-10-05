@@ -38,6 +38,14 @@ class ScreenRecorderViewModel : ViewModel() {
     private val _recordingLimitsConfig = MutableStateFlow(RecordingLimitsConfig())
     val recordingLimitsConfig: StateFlow<RecordingLimitsConfig> = _recordingLimitsConfig.asStateFlow()
 
+    private val _batterySaverConfig = MutableStateFlow(BatterySaverConfig())
+    val batterySaverConfig: StateFlow<BatterySaverConfig> = _batterySaverConfig.asStateFlow()
+
+    private val _batteryState = MutableStateFlow(BatteryState())
+    val batteryState: StateFlow<BatteryState> = _batteryState.asStateFlow()
+
+    private var previousVideoConfigBeforeBatterySaver: VideoConfig? = null
+
     private val _storageFolder = MutableStateFlow(StorageFolderConfig())
     val storageFolder: StateFlow<StorageFolderConfig> = _storageFolder.asStateFlow()
 
@@ -320,10 +328,21 @@ class ScreenRecorderViewModel : ViewModel() {
                 return true
             }
         }
+
+        // Critical battery auto-stop check
+        if (_batterySaverConfig.value.isEnabled && _batterySaverConfig.value.autoStopAtCritical) {
+            val batt = _batteryState.value
+            if (batt.levelPercent <= _batterySaverConfig.value.criticalThresholdPercent && !batt.isCharging) {
+                stopRecording()
+                showToast("⚠️ Critical battery (${batt.levelPercent}%): Auto-saved to protect file.")
+                return true
+            }
+        }
         return false
     }
 
     private fun actuallyStartRecording() {
+        evaluateBatterySaver()
         _recordingStatus.value = RecordingStatus.RECORDING
         _elapsedSeconds.value = 0L
         showToast("Recording started! Screen capture active.")
@@ -333,6 +352,7 @@ class ScreenRecorderViewModel : ViewModel() {
             while (_recordingStatus.value == RecordingStatus.RECORDING) {
                 delay(1000)
                 _elapsedSeconds.value += 1
+                evaluateBatterySaver()
                 if (checkLimitsAndAutoStop()) break
             }
         }
@@ -605,6 +625,126 @@ class ScreenRecorderViewModel : ViewModel() {
     fun setThemeMode(mode: AppThemeMode) {
         _themeMode.value = mode
         showToast("Theme switched to ${mode.title}")
+    }
+
+    // Battery-Saver Management
+    fun updateBatteryState(level: Int, isCharging: Boolean) {
+        val isLow = level <= _batterySaverConfig.value.thresholdPercent && !isCharging
+        _batteryState.value = BatteryState(
+            levelPercent = level,
+            isCharging = isCharging,
+            isLowBattery = isLow,
+            isSimulated = false
+        )
+        evaluateBatterySaver()
+    }
+
+    fun setSimulatedBattery(level: Int, isCharging: Boolean) {
+        val isLow = level <= _batterySaverConfig.value.thresholdPercent && !isCharging
+        _batteryState.value = BatteryState(
+            levelPercent = level,
+            isCharging = isCharging,
+            isLowBattery = isLow,
+            isSimulated = true
+        )
+        evaluateBatterySaver()
+    }
+
+    fun updateBatterySaverConfig(config: BatterySaverConfig) {
+        _batterySaverConfig.value = config
+        evaluateBatterySaver()
+    }
+
+    fun setBatterySaverEnabled(enabled: Boolean) {
+        _batterySaverConfig.value = _batterySaverConfig.value.copy(isEnabled = enabled)
+        if (!enabled && _batterySaverConfig.value.isBatterySaverActive) {
+            restorePreBatterySaverConfig()
+        } else {
+            evaluateBatterySaver()
+        }
+        showToast(if (enabled) "Battery-Saver enabled (threshold: ${_batterySaverConfig.value.thresholdPercent}%)" else "Battery-Saver mode disabled")
+    }
+
+    fun setBatterySaverThreshold(threshold: Int) {
+        _batterySaverConfig.value = _batterySaverConfig.value.copy(thresholdPercent = threshold)
+        evaluateBatterySaver()
+        showToast("Battery threshold set to $threshold%")
+    }
+
+    fun setBatterySaverTargetPreset(preset: String) {
+        _batterySaverConfig.value = _batterySaverConfig.value.copy(targetResolutionPreset = preset)
+        if (_batterySaverConfig.value.isBatterySaverActive) {
+            applyBatterySaverDegradation()
+        }
+    }
+
+    fun setBatterySaverTargetFramerate(fps: Int) {
+        _batterySaverConfig.value = _batterySaverConfig.value.copy(targetFramerate = fps)
+        if (_batterySaverConfig.value.isBatterySaverActive) {
+            applyBatterySaverDegradation()
+        }
+    }
+
+    fun setBatterySaverAutoStopAtCritical(autoStop: Boolean) {
+        _batterySaverConfig.value = _batterySaverConfig.value.copy(autoStopAtCritical = autoStop)
+    }
+
+    fun evaluateBatterySaver() {
+        val cfg = _batterySaverConfig.value
+        val batt = _batteryState.value
+        if (!cfg.isEnabled) {
+            if (cfg.isBatterySaverActive) {
+                restorePreBatterySaverConfig()
+            }
+            return
+        }
+
+        val shouldBeActive = batt.levelPercent <= cfg.thresholdPercent && !batt.isCharging
+        if (shouldBeActive && !cfg.isBatterySaverActive) {
+            applyBatterySaverDegradation()
+        } else if (!shouldBeActive && cfg.isBatterySaverActive) {
+            restorePreBatterySaverConfig()
+        }
+    }
+
+    private fun applyBatterySaverDegradation() {
+        val cfg = _batterySaverConfig.value
+        val currentVideo = _videoConfig.value
+
+        if (previousVideoConfigBeforeBatterySaver == null) {
+            previousVideoConfigBeforeBatterySaver = currentVideo
+        }
+
+        val isLandscape = currentVideo.orientation == "Landscape"
+        val (w, h) = when (cfg.targetResolutionPreset) {
+            "480p" -> if (isLandscape) 854 to 480 else 480 to 854
+            "720p" -> if (isLandscape) 1280 to 720 else 720 to 1280
+            else -> if (isLandscape) 854 to 480 else 480 to 854
+        }
+        val bitrate = when (cfg.targetResolutionPreset) {
+            "480p" -> 1500000
+            "720p" -> 2500000
+            else -> 1500000
+        }
+
+        _videoConfig.value = currentVideo.copy(
+            resolution = "${w}x${h}",
+            width = w,
+            height = h,
+            bitrate = bitrate,
+            framerate = cfg.targetFramerate
+        )
+        _batterySaverConfig.value = cfg.copy(isBatterySaverActive = true)
+        showToast("⚡ Low Battery (${_batteryState.value.levelPercent}%): Switched to ${cfg.targetResolutionPreset} @ ${cfg.targetFramerate}fps")
+    }
+
+    private fun restorePreBatterySaverConfig() {
+        previousVideoConfigBeforeBatterySaver?.let { prev ->
+            _videoConfig.value = prev
+            previousVideoConfigBeforeBatterySaver = null
+        }
+        _batterySaverConfig.value = _batterySaverConfig.value.copy(isBatterySaverActive = false)
+        showToast("⚡ Battery normal: Restored video settings")
     }
 
     // Painter methods
