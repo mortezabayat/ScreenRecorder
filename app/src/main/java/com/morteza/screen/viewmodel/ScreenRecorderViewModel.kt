@@ -1,10 +1,15 @@
 package com.morteza.screen.viewmodel
 
+import android.content.Context
+import android.content.Intent
+import android.media.MediaMetadataRetriever
+import android.os.Environment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.morteza.screen.model.*
+import com.morteza.screen.service.ScreenRecordService
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -14,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 
 class ScreenRecorderViewModel : ViewModel() {
 
@@ -103,41 +109,8 @@ class ScreenRecorderViewModel : ViewModel() {
     private val _selectedVideoForPreview = MutableStateFlow<VideoItem?>(null)
     val selectedVideoForPreview: StateFlow<VideoItem?> = _selectedVideoForPreview.asStateFlow()
 
-    // Recorded videos repository with sample timestamps for testing auto-cleanup
-    private val _videos = MutableStateFlow<List<VideoItem>>(
-        listOf(
-            VideoItem(
-                id = "sample-1",
-                name = "ScreenRecorder-Today-1920x1080.mp4",
-                path = "/storage/emulated/0/Movies/ScreenRecorder/sample-1.mp4",
-                durationSeconds = 125,
-                sizeBytes = 18_450_000,
-                resolution = "1920x1080",
-                timestamp = System.currentTimeMillis() - 1000L * 60 * 20,
-                isStarred = true
-            ),
-            VideoItem(
-                id = "sample-2",
-                name = "ScreenRecorder-8DaysAgo-1280x720.mp4",
-                path = "/storage/emulated/0/Movies/ScreenRecorder/sample-2.mp4",
-                durationSeconds = 48,
-                sizeBytes = 6_200_000,
-                resolution = "1280x720",
-                timestamp = System.currentTimeMillis() - 8L * 86_400_000L,
-                isStarred = false
-            ),
-            VideoItem(
-                id = "sample-3",
-                name = "ScreenRecorder-45DaysAgo-Archive.mp4",
-                path = "/storage/emulated/0/Movies/ScreenRecorder/sample-3.mp4",
-                durationSeconds = 240,
-                sizeBytes = 35_100_000,
-                resolution = "1920x1080",
-                timestamp = System.currentTimeMillis() - 45L * 86_400_000L,
-                isStarred = false
-            )
-        )
-    )
+    // Recorded videos repository (populated from real files on disk)
+    private val _videos = MutableStateFlow<List<VideoItem>>(emptyList())
     val videos: StateFlow<List<VideoItem>> = _videos.asStateFlow()
 
     // Painter state
@@ -341,11 +314,47 @@ class ScreenRecorderViewModel : ViewModel() {
         return false
     }
 
-    private fun actuallyStartRecording() {
+    private val _requestScreenCapturePermission = MutableStateFlow(false)
+    val requestScreenCapturePermission: StateFlow<Boolean> = _requestScreenCapturePermission.asStateFlow()
+
+    fun onScreenCapturePermissionRequested() {
+        _requestScreenCapturePermission.value = false
+    }
+
+    fun cancelRecording() {
+        _recordingStatus.value = RecordingStatus.IDLE
+        _countdownValue.value = null
+        countdownJob?.cancel()
+        timerJob?.cancel()
+    }
+
+    fun startScreenRecordService(context: Context, resultCode: Int, resultData: Intent) {
         evaluateBatterySaver()
         _recordingStatus.value = RecordingStatus.RECORDING
         _elapsedSeconds.value = 0L
-        showToast("Recording started! Screen capture active.")
+
+        val config = _videoConfig.value
+        val folder = _storageFolder.value
+        val timeMillis = System.currentTimeMillis()
+        val fileName = "ScreenRecorder-$timeMillis-${config.width}x${config.height}.mp4"
+        val baseDir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES) ?: File(folder.path)
+        baseDir.mkdirs()
+        val destFile = File(baseDir, fileName)
+
+        ScreenRecordService.start(
+            context = context,
+            resultCode = resultCode,
+            resultData = resultData,
+            outputPath = destFile.absolutePath,
+            width = config.width,
+            height = config.height,
+            bitrate = config.bitrate,
+            framerate = config.framerate,
+            includeAudio = _audioConfig.value.includeMic,
+            specs = "${config.resolution} • ${config.framerate}fps"
+        )
+
+        showToast("Recording active! Screen capture started.")
 
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
@@ -356,6 +365,10 @@ class ScreenRecorderViewModel : ViewModel() {
                 if (checkLimitsAndAutoStop()) break
             }
         }
+    }
+
+    private fun actuallyStartRecording() {
+        _requestScreenCapturePermission.value = true
     }
 
     fun pauseRecording() {
@@ -386,6 +399,70 @@ class ScreenRecorderViewModel : ViewModel() {
             uriString = uriString
         )
         showToast("Destination folder set: $displayName")
+    }
+
+    fun loadRealVideosFromFolder(context: Context) {
+        viewModelScope.launch {
+            try {
+                val folder = _storageFolder.value
+                val primaryDir = File(folder.path)
+                val fallbackDir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES)
+
+                val targetDirs = listOfNotNull(
+                    if (primaryDir.exists()) primaryDir else null,
+                    if (fallbackDir != null && fallbackDir.exists()) fallbackDir else null
+                ).distinct()
+
+                val videoFiles = mutableListOf<File>()
+                for (dir in targetDirs) {
+                    try {
+                        dir.walkTopDown()
+                            .filter { it.isFile && (it.extension.lowercase() in listOf("mp4", "mkv", "webm", "3gp")) }
+                            .forEach { videoFiles.add(it) }
+                    } catch (_: Exception) {}
+                }
+
+                if (videoFiles.isEmpty()) {
+                    return@launch
+                }
+
+                val retriever = MediaMetadataRetriever()
+                val realVideos = videoFiles.map { file ->
+                    var durationSec = 0L
+                    var resolution = "1080p"
+                    try {
+                        retriever.setDataSource(file.absolutePath)
+                        val durationMsStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                        val widthStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                        val heightStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+
+                        if (durationMsStr != null) {
+                            durationSec = (durationMsStr.toLongOrNull() ?: 0L) / 1000L
+                        }
+                        if (widthStr != null && heightStr != null) {
+                            resolution = "${widthStr}x${heightStr}"
+                        }
+                    } catch (_: Exception) {}
+
+                    VideoItem(
+                        id = "file-${file.lastModified()}-${file.name.hashCode()}",
+                        name = file.name,
+                        path = file.absolutePath,
+                        durationSeconds = durationSec,
+                        sizeBytes = file.length(),
+                        resolution = resolution,
+                        timestamp = file.lastModified()
+                    )
+                }.sortedByDescending { it.timestamp }
+
+                try { retriever.release() } catch (_: Exception) {}
+
+                val starredPaths = _videos.value.filter { it.isStarred }.map { it.path }.toSet()
+                _videos.value = realVideos.map {
+                    if (it.path in starredPaths) it.copy(isStarred = true) else it
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     fun toggleOrganizeByDate(enabled: Boolean) {
@@ -419,6 +496,14 @@ class ScreenRecorderViewModel : ViewModel() {
                 resolution = config.resolution,
                 timestamp = timeMillis
             )
+
+            try {
+                val destFile = File(filePath)
+                destFile.parentFile?.mkdirs()
+                if (!destFile.exists()) {
+                    destFile.createNewFile()
+                }
+            } catch (_: Exception) {}
 
             _videos.value = listOf(newVideo) + _videos.value
             _selectedVideoForPreview.value = newVideo

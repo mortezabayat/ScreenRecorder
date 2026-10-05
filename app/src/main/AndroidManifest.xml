@@ -42,7 +42,7 @@
             android:name=".service.ScreenRecordService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback|specialUse">
+            android:foregroundServiceType="mediaProjection|mediaPlayback|specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Screen recording active notification status and timer management" />

@@ -54,7 +54,7 @@ enum class AppThemeMode(val title: String) {
 }
 
 data class StorageFolderConfig(
-    val displayName: String = "Movies / ScreenRecorder",
+    val displayName: String = "Movies/ScreenRecorder",
     val path: String = "/storage/emulated/0/Movies/ScreenRecorder",
     val uriString: String? = null,
     val organizeByDate: Boolean = false

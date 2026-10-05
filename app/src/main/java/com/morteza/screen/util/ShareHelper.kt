@@ -12,6 +12,42 @@ import java.io.File
 
 object ShareHelper {
 
+    fun playVideoExternal(context: Context, video: VideoItem) {
+        try {
+            val file = File(video.path)
+            val uri: Uri = if (file.exists()) {
+                try {
+                    FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.provider",
+                        file
+                    )
+                } catch (_: Exception) {
+                    Uri.fromFile(file)
+                }
+            } else {
+                val cacheFile = File(context.cacheDir, video.name)
+                if (!cacheFile.exists()) {
+                    cacheFile.writeBytes(ByteArray(1024))
+                }
+                FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.provider",
+                    cacheFile
+                )
+            }
+
+            val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "video/*")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(viewIntent, "Play Video With"))
+        } catch (e: Exception) {
+            Toast.makeText(context, "No video player application found: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     fun shareVideo(context: Context, video: VideoItem) {
         try {
             val file = File(video.path)

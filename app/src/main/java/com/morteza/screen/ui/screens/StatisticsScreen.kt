@@ -16,11 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.morteza.screen.model.AppScreen
 import com.morteza.screen.ui.theme.AccentOrange
 import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.ScreenTheme
 import com.morteza.screen.ui.theme.TealDark
 import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
@@ -454,5 +457,13 @@ private fun HighlightRow(
             Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Text(subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StatisticsScreenPreview() {
+    ScreenTheme(darkTheme = true) {
+        StatisticsScreen(viewModel = viewModel())
     }
 }

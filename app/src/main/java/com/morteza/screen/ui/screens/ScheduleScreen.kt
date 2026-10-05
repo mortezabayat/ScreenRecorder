@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,12 +18,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.morteza.screen.model.ScheduledRecording
 import com.morteza.screen.model.ScheduledStatus
 import com.morteza.screen.ui.theme.AccentOrange
 import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.ScreenTheme
 import com.morteza.screen.ui.theme.TealDark
 import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
@@ -141,11 +145,11 @@ fun ScheduleScreen(
                             1440 to "Tomorrow"
                         )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            timeOffsets.forEach { (mins, label) ->
+                            items(timeOffsets) { (mins, label) ->
                                 val isSelected = selectedOffsetMinutes == mins
                                 FilterChip(
                                     selected = isSelected,
@@ -156,8 +160,7 @@ fun ScheduleScreen(
                                         selectedLabelColor = Color.White,
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                         labelColor = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    modifier = Modifier.weight(1f)
+                                    )
                                 )
                             }
                         }
@@ -479,5 +482,13 @@ fun ScheduleScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScheduleScreenPreview() {
+    ScreenTheme(darkTheme = true) {
+        ScheduleScreen(viewModel = viewModel())
     }
 }

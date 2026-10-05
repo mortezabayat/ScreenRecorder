@@ -16,11 +16,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.morteza.screen.model.AppScreen
 import com.morteza.screen.model.VideoItem
 import com.morteza.screen.ui.components.VideoTrimmingDialog
 import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.ScreenTheme
 import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.util.ShareHelper
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
@@ -40,6 +44,11 @@ fun GalleryScreen(
     var videoToTrim by remember { mutableStateOf<VideoItem?>(null) }
 
     val filtered = videos.filter { it.name.contains(searchQuery, ignoreCase = true) }
+
+    // Scan real video files from storage
+    LaunchedEffect(Unit) {
+        viewModel.loadRealVideosFromFolder(context)
+    }
 
     // Video Trimming Dialog
     VideoTrimmingDialog(
@@ -182,13 +191,18 @@ fun GalleryScreen(
                 fontSize = 12.sp
             )
 
-            TextButton(
-                onClick = { viewModel.navigateTo(com.morteza.screen.model.AppScreen.STATISTICS) },
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-            ) {
-                Icon(Icons.Default.Analytics, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Stats", color = TealPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Row {
+                IconButton(onClick = { viewModel.loadRealVideosFromFolder(context) }) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Scan Storage", tint = TealPrimary, modifier = Modifier.size(18.dp))
+                }
+                TextButton(
+                    onClick = { viewModel.navigateTo(AppScreen.STATISTICS) },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Icon(Icons.Default.Analytics, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Stats", color = TealPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
 
@@ -218,109 +232,172 @@ fun GalleryScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(filtered) { video ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.selectVideoForPreview(video) },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                    GalleryVideoCard(
+                        video = video,
+                        onSelect = { viewModel.selectVideoForPreview(video) },
+                        onToggleStar = { viewModel.toggleStarVideo(video) },
+                        onTrim = { videoToTrim = video },
+                        onShare = { ShareHelper.shareVideo(context, video) },
+                        onDelete = { viewModel.deleteVideo(video) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GalleryVideoCard(
+    video: VideoItem,
+    onSelect: () -> Unit,
+    onToggleStar: () -> Unit,
+    onTrim: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayCircle,
+                    contentDescription = null,
+                    tint = TealPrimary,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = video.name,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        fontSize = 13.sp,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (video.isStarred) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = "Protected",
+                            tint = Color(0xFFFFC107),
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val mins = video.durationSeconds / 60
+                val secs = video.durationSeconds % 60
+                val sizeMb = String.format("%.1f MB", video.sizeBytes / (1024f * 1024f))
+                val dateStr = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(video.timestamp))
+
+                val daysAgo = ((System.currentTimeMillis() - video.timestamp) / 86_400_000L).toInt()
+                val ageLabel = when {
+                    daysAgo <= 0 -> "Today"
+                    daysAgo == 1 -> "1 day ago"
+                    else -> "$daysAgo days ago"
+                }
+
+                Text(
+                    text = "${video.resolution} • ${String.format("%02d:%02d", mins, secs)} • $sizeMb",
+                    color = Color.LightGray,
+                    fontSize = 11.sp
+                )
+                Text(
+                    text = "$dateStr ($ageLabel)",
+                    color = Color.Gray,
+                    fontSize = 11.sp
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onToggleStar) {
+                    Icon(
+                        imageVector = if (video.isStarred) Icons.Default.Star else Icons.Default.StarBorder,
+                        contentDescription = "Protect",
+                        tint = if (video.isStarred) Color(0xFFFFC107) else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Options", tint = Color.LightGray, modifier = Modifier.size(20.dp))
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                        modifier = Modifier.background(Color(0xFF0F172A))
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.Black),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayCircle,
-                                    contentDescription = null,
-                                    tint = TealPrimary,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = video.name,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        fontSize = 13.sp,
-                                        modifier = Modifier.weight(1f, fill = false)
-                                    )
-                                    if (video.isStarred) {
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Icon(
-                                            Icons.Default.Star,
-                                            contentDescription = "Protected",
-                                            tint = Color(0xFFFFC107),
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                val mins = video.durationSeconds / 60
-                                val secs = video.durationSeconds % 60
-                                val sizeMb = String.format("%.1f MB", video.sizeBytes / (1024f * 1024f))
-                                val dateStr = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(video.timestamp))
-
-                                val daysAgo = ((System.currentTimeMillis() - video.timestamp) / 86_400_000L).toInt()
-                                val ageLabel = when {
-                                    daysAgo <= 0 -> "Today"
-                                    daysAgo == 1 -> "1 day ago"
-                                    else -> "$daysAgo days ago"
-                                }
-
-                                Text(
-                                    text = "${video.resolution} • ${String.format("%02d:%02d", mins, secs)} • $sizeMb",
-                                    color = Color.LightGray,
-                                    fontSize = 11.sp
-                                )
-                                Text(
-                                    text = "$dateStr ($ageLabel)",
-                                    color = Color.Gray,
-                                    fontSize = 11.sp
-                                )
-                            }
-
-                            Row {
-                                IconButton(onClick = { viewModel.toggleStarVideo(video) }) {
-                                    Icon(
-                                        imageVector = if (video.isStarred) Icons.Default.Star else Icons.Default.StarBorder,
-                                        contentDescription = "Protect",
-                                        tint = if (video.isStarred) Color(0xFFFFC107) else Color.Gray,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                IconButton(onClick = { videoToTrim = video }) {
-                                    Icon(Icons.Default.ContentCut, contentDescription = "Trim Video", tint = TealPrimary, modifier = Modifier.size(20.dp))
-                                }
-                                IconButton(onClick = { ShareHelper.shareVideo(context, video) }) {
-                                    Icon(Icons.Default.Share, contentDescription = "Share via Intent", tint = TealPrimary, modifier = Modifier.size(20.dp))
-                                }
-                                IconButton(onClick = { selectedVideoForShareSheet = video }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "Share Options", tint = Color.LightGray, modifier = Modifier.size(20.dp))
-                                }
-                                IconButton(onClick = { viewModel.deleteVideo(video) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AccentRed, modifier = Modifier.size(20.dp))
-                                }
-                            }
-                        }
+                        DropdownMenuItem(
+                            text = { Text("Play Video", color = Color.White) },
+                            onClick = {
+                                showMenu = false
+                                onSelect()
+                            },
+                            leadingIcon = { Icon(Icons.Default.PlayArrow, contentDescription = null, tint = TealPrimary) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Trim Video", color = Color.White) },
+                            onClick = {
+                                showMenu = false
+                                onTrim()
+                            },
+                            leadingIcon = { Icon(Icons.Default.ContentCut, contentDescription = null, tint = TealPrimary) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Share Video", color = Color.White) },
+                            onClick = {
+                                showMenu = false
+                                onShare()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Share, contentDescription = null, tint = TealPrimary) }
+                        )
+                        HorizontalDivider(color = Color(0xFF334155))
+                        DropdownMenuItem(
+                            text = { Text("Delete Video", color = AccentRed) },
+                            onClick = {
+                                showMenu = false
+                                onDelete()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = AccentRed) }
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun GalleryScreenPreview() {
+    ScreenTheme(darkTheme = true) {
+        GalleryScreen(viewModel = viewModel())
     }
 }

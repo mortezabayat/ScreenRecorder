@@ -1,11 +1,17 @@
 package com.morteza.screen
 
 import android.Manifest
+import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
+import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -44,6 +50,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permissionsToRequest = mutableListOf<String>()
@@ -81,6 +88,38 @@ class MainActivity : ComponentActivity() {
 
                 val isRecording = recordingStatus == RecordingStatus.RECORDING || recordingStatus == RecordingStatus.PAUSED
 
+                val mediaProjectionManager = remember {
+                    getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                }
+
+                val screenCaptureLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult()
+                ) { result ->
+                    if (result.resultCode == RESULT_OK && result.data != null) {
+                        viewModel.startScreenRecordService(
+                            context = this@MainActivity,
+                            resultCode = result.resultCode,
+                            resultData = result.data!!
+                        )
+                    } else {
+                        viewModel.cancelRecording()
+                        viewModel.showToast("Screen capture permission denied")
+                    }
+                }
+
+                val requestScreenCapturePermission by viewModel.requestScreenCapturePermission.collectAsState()
+                LaunchedEffect(requestScreenCapturePermission) {
+                    if (requestScreenCapturePermission) {
+                        viewModel.onScreenCapturePermissionRequested()
+                        screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+                    }
+                }
+
+                // Scan real recording files on startup
+                LaunchedEffect(Unit) {
+                    viewModel.loadRealVideosFromFolder(this@MainActivity)
+                }
+
                 // Sync notification actions back to ViewModel
                 LaunchedEffect(Unit) {
                     ScreenRecordService.onNotificationAction = { action ->
@@ -97,7 +136,7 @@ class MainActivity : ComponentActivity() {
                     when (recordingStatus) {
                         RecordingStatus.RECORDING -> {
                             if (!ScreenRecordService.isServiceRunning) {
-                                ScreenRecordService.start(this@MainActivity, "${videoConfig.resolution} • ${videoConfig.framerate}fps • ${audioConfig.audioSource.shortLabel}")
+                                ScreenRecordService.start(this@MainActivity, specs = "${videoConfig.resolution} • ${videoConfig.framerate}fps • ${audioConfig.audioSource.shortLabel}")
                             } else if (ScreenRecordService.isRecordingPaused) {
                                 ScreenRecordService.resume(this@MainActivity)
                             }
@@ -299,6 +338,7 @@ class MainActivity : ComponentActivity() {
                     Scaffold(
                         topBar = {
                             TopAppBar(
+                                modifier = Modifier.statusBarsPadding(),
                                 title = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(

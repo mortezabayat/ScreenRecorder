@@ -37,53 +37,53 @@ fun FloatingCircularMenu(
 ) {
     val isVisible by viewModel.isFloatingMenuVisible.collectAsState()
     val status by viewModel.recordingStatus.collectAsState()
-    val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
 
     if (!isVisible) return
 
     var isExpanded by remember { mutableStateOf(false) }
-    var offsetX by remember { mutableFloatStateOf(650f) }
-    var offsetY by remember { mutableFloatStateOf(800f) }
+    var dragOffsetX by remember { mutableFloatStateOf(0f) }
+    var dragOffsetY by remember { mutableFloatStateOf(0f) }
 
     val isRecording = status == RecordingStatus.RECORDING || status == RecordingStatus.PAUSED
 
-    // Close button rotation
+    // Rotation for toggle icon
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 45f else 0f,
         animationSpec = tween(durationMillis = 200),
         label = "rotation"
     )
 
-    // Sub-buttons fan out distance animation
+    // Sub-buttons radial fan-out distance
     val radiusAnim by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
+        targetValue = if (isExpanded) 160f else 0f,
         animationSpec = tween(durationMillis = 250),
         label = "radius"
     )
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
-        // Dim overlay when expanded
+        // Dim overlay when radial menu is expanded
         if (isExpanded) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
+                    .background(Color.Black.copy(alpha = 0.45f))
                     .clickable { isExpanded = false }
             )
         }
 
         Box(
             modifier = Modifier
-                .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 80.dp, end = 20.dp)
+                .offset { IntOffset(dragOffsetX.roundToInt(), dragOffsetY.roundToInt()) }
                 .pointerInput(isExpanded) {
                     if (!isExpanded) {
                         detectDragGestures { change, dragAmount ->
                             change.consume()
-                            offsetX += dragAmount.x
-                            offsetY += dragAmount.y
+                            dragOffsetX += dragAmount.x
+                            dragOffsetY += dragAmount.y
                         }
                     }
                 },
@@ -91,7 +91,7 @@ fun FloatingCircularMenu(
         ) {
             // Radial Sub-Action Buttons
             if (radiusAnim > 5f) {
-                val angles = listOf(140.0, 180.0, 220.0, 260.0)
+                val angles = listOf(135.0, 180.0, 225.0, 270.0)
 
                 if (isRecording) {
                     // Button 1: Pause / Resume
@@ -199,14 +199,14 @@ fun FloatingCircularMenu(
                 containerColor = if (isRecording) AccentRed else Color.White,
                 contentColor = if (isRecording) Color.White else TealPrimary,
                 modifier = Modifier
-                    .size(60.dp)
+                    .size(56.dp)
                     .shadow(12.dp, CircleShape)
             ) {
                 Icon(
-                    imageVector = if (isExpanded) Icons.Default.Close else if (isRecording) Icons.Default.Stop else Icons.Default.Add,
+                    imageVector = if (isExpanded) Icons.Default.Close else if (isRecording) Icons.Default.Videocam else Icons.Default.Add,
                     contentDescription = "Screen Recorder Menu",
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(28.dp)
                         .rotate(rotation)
                 )
             }
@@ -230,7 +230,7 @@ private fun RadialSubButton(
         onClick = onClick,
         modifier = Modifier
             .offset { IntOffset(subX.roundToInt(), subY.roundToInt()) }
-            .size(48.dp)
+            .size(46.dp)
             .shadow(8.dp, CircleShape)
             .background(backgroundColor, CircleShape)
     ) {
@@ -238,7 +238,7 @@ private fun RadialSubButton(
             imageVector = icon,
             contentDescription = null,
             tint = Color.White,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }

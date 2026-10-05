@@ -1,5 +1,7 @@
 package com.morteza.screen.ui.components
 
+import android.net.Uri
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,20 +11,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.FileProvider
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import com.morteza.screen.model.VideoItem
 import com.morteza.screen.ui.theme.AccentRed
 import com.morteza.screen.ui.theme.TealDark
 import com.morteza.screen.ui.theme.TealPrimary
+import com.morteza.screen.util.ShareHelper
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.delay
+import androidx.core.net.toUri
 
+@OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerDialog(
     video: VideoItem?,
@@ -33,8 +48,75 @@ fun VideoPlayerDialog(
 ) {
     if (video == null) return
 
+    val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
-    var currentProgress by remember { mutableFloatStateOf(0.35f) }
+    var durationMs by remember { mutableLongStateOf(video.durationSeconds * 1000L) }
+    var currentPositionMs by remember { mutableLongStateOf(0L) }
+    var isSeeking by remember { mutableStateOf(false) }
+    var hasError by remember { mutableStateOf(false) }
+
+    // Resolve URI for ExoPlayer
+    val videoUri = remember(video.path) {
+        val file = File(video.path)
+        if (file.exists() && file.length() > 0) {
+            Uri.fromFile(file)
+        } else if (video.path.startsWith("content://") || video.path.startsWith("http://") || video.path.startsWith("https://")) {
+            video.path.toUri()
+        } else {
+            val cacheFile = File(context.cacheDir, video.name)
+            if (cacheFile.exists() && cacheFile.length() > 1000) {
+                Uri.fromFile(cacheFile)
+            } else {
+                // Fallback to valid sample media stream for demo/placeholder items
+                "https://storage.googleapis.com/exoplayer-test-media-1/mp4/android-screens-10s.mp4".toUri()
+            }
+        }
+    }
+
+    // Initialize ExoPlayer
+    val exoPlayer = remember(video.path) {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(videoUri))
+            prepare()
+            playWhenReady = true
+        }
+    }
+
+    DisposableEffect(video.path) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) {
+                isPlaying = playing
+            }
+
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) {
+                    if (exoPlayer.duration > 0) {
+                        durationMs = exoPlayer.duration
+                    }
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                hasError = true
+            }
+        }
+        exoPlayer.addListener(listener)
+
+        onDispose {
+            exoPlayer.removeListener(listener)
+            exoPlayer.release()
+        }
+    }
+
+    // Periodic progress ticker for custom scrubber
+    LaunchedEffect(exoPlayer) {
+        while (true) {
+            if (!isSeeking && exoPlayer.isPlaying) {
+                currentPositionMs = exoPlayer.currentPosition
+            }
+            delay(250)
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -71,7 +153,7 @@ fun VideoPlayerDialog(
                     }
                 }
 
-                // Video Stage / Visualizer Box
+                // Video Stage with ExoPlayer PlayerView
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -79,7 +161,54 @@ fun VideoPlayerDialog(
                         .background(Color.Black),
                     contentAlignment = Alignment.Center
                 ) {
-                    // BitmapOverlay GL Watermark badge (from original BitmapOverlayVideoProcessor)
+                    if (!hasError) {
+                        AndroidView(
+                            factory = { ctx ->
+                                PlayerView(ctx).apply {
+                                    player = exoPlayer
+                                    useController = true
+                                    setShowNextButton(false)
+                                    setShowPreviousButton(false)
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.VideoCall,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Sample Video Demo",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = "Videos captured by the app play seamlessly here.",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = { ShareHelper.playVideoExternal(context, video) },
+                                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary)
+                            ) {
+                                Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Open in System Video Player")
+                            }
+                        }
+                    }
+
+                    // Watermark badge
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -102,28 +231,24 @@ fun VideoPlayerDialog(
                             )
                         }
                     }
-
-                    // Play / Pause central button
-                    IconButton(
-                        onClick = { isPlaying = !isPlaying },
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(TealPrimary.copy(alpha = 0.85f), RoundedCornerShape(32.dp))
-                    ) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = Color.White,
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
                 }
 
                 // Scrubber Progress Bar
+                val totalSec = (durationMs / 1000L).coerceAtLeast(1L)
+                val currentSec = (currentPositionMs / 1000L).coerceIn(0L, totalSec)
+                val progressFraction = (currentPositionMs.toFloat() / durationMs.coerceAtLeast(1L).toFloat()).coerceIn(0f, 1f)
+
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Slider(
-                        value = currentProgress,
-                        onValueChange = { currentProgress = it },
+                        value = progressFraction,
+                        onValueChange = { fraction ->
+                            isSeeking = true
+                            currentPositionMs = (fraction * durationMs).toLong()
+                        },
+                        onValueChangeFinished = {
+                            exoPlayer.seekTo(currentPositionMs)
+                            isSeeking = false
+                        },
                         colors = SliderDefaults.colors(
                             thumbColor = TealPrimary,
                             activeTrackColor = TealPrimary,
@@ -134,14 +259,13 @@ fun VideoPlayerDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        val currentSec = (currentProgress * video.durationSeconds).toLong()
                         Text(
                             text = String.format("%02d:%02d", currentSec / 60, currentSec % 60),
                             fontSize = 12.sp,
                             color = Color.LightGray
                         )
                         Text(
-                            text = String.format("%02d:%02d", video.durationSeconds / 60, video.durationSeconds % 60),
+                            text = String.format("%02d:%02d", totalSec / 60, totalSec % 60),
                             fontSize = 12.sp,
                             color = Color.LightGray
                         )
@@ -170,29 +294,38 @@ fun VideoPlayerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.End
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    if (onTrim != null) {
-                        TextButton(onClick = { onTrim(video) }) {
-                            Icon(Icons.Default.ContentCut, contentDescription = null, tint = TealPrimary)
+                    TextButton(onClick = { ShareHelper.playVideoExternal(context, video) }) {
+                        Icon(Icons.Default.PlayCircle, contentDescription = null, tint = TealPrimary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("System Player", color = TealPrimary)
+                    }
+
+                    Row {
+                        if (onTrim != null) {
+                            TextButton(onClick = { onTrim(video) }) {
+                                Icon(Icons.Default.ContentCut, contentDescription = null, tint = TealPrimary)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Trim", color = TealPrimary)
+                            }
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Trim", color = TealPrimary)
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
 
-                    TextButton(onClick = { onShare(video) }) {
-                        Icon(Icons.Default.Share, contentDescription = null, tint = TealPrimary)
+                        TextButton(onClick = { onShare(video) }) {
+                            Icon(Icons.Default.Share, contentDescription = null, tint = TealPrimary)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Share", color = TealPrimary)
+                        }
+
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Share", color = TealPrimary)
-                    }
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    TextButton(onClick = { onDelete(video) }) {
-                        Icon(Icons.Default.Delete, contentDescription = null, tint = AccentRed)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Delete", color = AccentRed)
+                        TextButton(onClick = { onDelete(video) }) {
+                            Icon(Icons.Default.Delete, contentDescription = null, tint = AccentRed)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Delete", color = AccentRed)
+                        }
                     }
                 }
             }

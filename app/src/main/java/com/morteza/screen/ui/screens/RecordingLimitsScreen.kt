@@ -12,11 +12,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.morteza.screen.model.RecordingLimitsConfig
 import com.morteza.screen.ui.theme.AccentOrange
 import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.ScreenTheme
 import com.morteza.screen.ui.theme.TealDark
 import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
@@ -384,5 +387,13 @@ fun RecordingLimitsScreen(
                 Text("Reset All Limits (Unlimited Recording)")
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RecordingLimitsScreenPreview() {
+    ScreenTheme(darkTheme = true) {
+        RecordingLimitsScreen(viewModel = viewModel())
     }
 }

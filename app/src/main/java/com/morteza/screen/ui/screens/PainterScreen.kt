@@ -22,9 +22,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.morteza.screen.model.DrawPath
 import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.ScreenTheme
 import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
 
@@ -212,5 +215,13 @@ fun PainterScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PainterScreenPreview() {
+    ScreenTheme(darkTheme = true) {
+        PainterScreen(viewModel = viewModel())
     }
 }

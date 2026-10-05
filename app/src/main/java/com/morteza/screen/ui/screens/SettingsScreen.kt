@@ -3,8 +3,8 @@ package com.morteza.screen.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -20,12 +20,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.morteza.screen.model.AppScreen
 import com.morteza.screen.model.AppThemeMode
 import com.morteza.screen.model.AudioSourceOption
 import com.morteza.screen.ui.theme.AccentOrange
 import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.ScreenTheme
 import com.morteza.screen.ui.theme.TealDark
 import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
@@ -71,18 +75,18 @@ fun SettingsScreen(
     if (showCustomFolderDialog) {
         AlertDialog(
             onDismissRequest = { showCustomFolderDialog = false },
-            title = { Text("Custom Destination Folder", color = Color.White) },
+            title = { Text("Custom Destination Folder", color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Enter custom folder name or storage path:", color = Color.LightGray, fontSize = 13.sp)
+                    Text("Enter custom folder name or storage path:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     OutlinedTextField(
                         value = customPathInput,
                         onValueChange = { customPathInput = it },
-                        placeholder = { Text("e.g. Work/Recordings", color = Color.Gray) },
+                        placeholder = { Text("e.g. Work/Recordings", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -108,10 +112,10 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showCustomFolderDialog = false }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Color(0xFF1E293B)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -126,11 +130,11 @@ fun SettingsScreen(
                 text = "Settings",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "Preferences, destination folder, and recording options",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
         }
@@ -234,7 +238,7 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -257,8 +261,8 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("Destination Folder", fontWeight = FontWeight.Bold, color = Color.White)
-                                Text("Location for saved video files", color = Color.Gray, fontSize = 11.sp)
+                                Text("Destination Folder", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Location for saved video files", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                             }
                         }
 
@@ -276,7 +280,7 @@ fun SettingsScreen(
 
                     // Active Path Display
                     Surface(
-                        color = Color(0xFF0F172A),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -284,13 +288,13 @@ fun SettingsScreen(
                             Text(
                                 text = storageFolder.displayName,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 13.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = storageFolder.path,
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 11.sp,
                                 fontFamily = FontFamily.Monospace
                             )
@@ -298,7 +302,7 @@ fun SettingsScreen(
                     }
 
                     // Folder Presets
-                    Text("Quick Presets:", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Quick Presets:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     val presets = listOf(
                         "Movies" to "/storage/emulated/0/Movies/ScreenRecorder",
                         "DCIM" to "/storage/emulated/0/DCIM/ScreenCapture",
@@ -319,7 +323,9 @@ fun SettingsScreen(
                                 label = { Text(name, fontSize = 11.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = TealPrimary,
-                                    selectedLabelColor = Color.White
+                                    selectedLabelColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -333,14 +339,14 @@ fun SettingsScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.LightGray)
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Enter Custom Folder Path", fontSize = 12.sp)
                     }
 
-                    HorizontalDivider(color = Color(0xFF334155))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
                     // Organize by Date Subfolders
                     Row(
@@ -349,8 +355,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Organize by Date (YYYY-MM)", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
-                            Text("Store videos in monthly subdirectories", color = Color.Gray, fontSize = 11.sp)
+                            Text("Organize by Date (YYYY-MM)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
+                            Text("Store videos in monthly subdirectories", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                         }
 
                         Switch(
@@ -368,7 +374,7 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -392,8 +398,8 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("Video Quality & Resolution Presets", fontWeight = FontWeight.Bold, color = Color.White)
-                                Text("Choose capture resolution, frame rate, and bitrate", color = Color.Gray, fontSize = 11.sp)
+                                Text("Video Quality & Resolution Presets", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Choose capture resolution, frame rate, and bitrate", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                             }
                         }
                     }
@@ -407,7 +413,7 @@ fun SettingsScreen(
                     }
 
                     Surface(
-                        color = Color(0xFF0F172A),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -419,11 +425,11 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text("Active Quality Preset", color = Color.Gray, fontSize = 11.sp)
+                                Text("Active Quality Preset", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                                 Text(
                                     text = "$currentPresetName • ${videoConfig.resolution}",
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 14.sp
                                 )
                                 Text(
@@ -436,7 +442,7 @@ fun SettingsScreen(
 
                             val mbPerMin = (videoConfig.bitrate.toLong() * 60L) / (8L * 1024L * 1024L)
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("Estimated Size", color = Color.Gray, fontSize = 11.sp)
+                                Text("Estimated Size", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                                 Text(
                                     text = "~$mbPerMin MB/min",
                                     fontWeight = FontWeight.Bold,
@@ -449,7 +455,7 @@ fun SettingsScreen(
 
                     // Resolution Presets Selector
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Resolution Preset:", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Resolution Preset:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         val qualityPresets = listOf(
                             Triple("480p", "480p SD", "854x480"),
                             Triple("720p", "720p HD", "1280x720"),
@@ -469,12 +475,14 @@ fun SettingsScreen(
                                     label = {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                            Text(sub, fontSize = 9.sp, color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color.Gray)
+                                            Text(sub, fontSize = 9.sp, color = if (isSelected) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = TealPrimary,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     ),
                                     modifier = Modifier.weight(1f)
                                 )
@@ -482,11 +490,11 @@ fun SettingsScreen(
                         }
                     }
 
-                    HorizontalDivider(color = Color(0xFF334155))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
                     // Frame Rate Selector (30 FPS vs 60 FPS)
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Frame Rate (FPS):", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Frame Rate (FPS):", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -497,12 +505,14 @@ fun SettingsScreen(
                                 label = {
                                     Column(modifier = Modifier.padding(vertical = 4.dp)) {
                                         Text("30 FPS", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                        Text("Standard • Battery efficient", fontSize = 10.sp, color = if (videoConfig.framerate == 30) Color.White.copy(alpha = 0.8f) else Color.Gray)
+                                        Text("Standard • Battery efficient", fontSize = 10.sp, color = if (videoConfig.framerate == 30) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = TealPrimary,
-                                    selectedLabelColor = Color.White
+                                    selectedLabelColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -513,19 +523,21 @@ fun SettingsScreen(
                                 label = {
                                     Column(modifier = Modifier.padding(vertical = 4.dp)) {
                                         Text("60 FPS", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                        Text("Ultra-Smooth • High Motion", fontSize = 10.sp, color = if (videoConfig.framerate == 60) Color.White.copy(alpha = 0.8f) else Color.Gray)
+                                        Text("Ultra-Smooth • High Motion", fontSize = 10.sp, color = if (videoConfig.framerate == 60) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = TealPrimary,
-                                    selectedLabelColor = Color.White
+                                    selectedLabelColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
 
-                    HorizontalDivider(color = Color(0xFF334155))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
                     // Orientation Selector (Landscape vs Portrait)
                     Row(
@@ -534,8 +546,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Screen Orientation", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
-                            Text("Widescreen (16:9) vs Mobile (9:16)", color = Color.Gray, fontSize = 11.sp)
+                            Text("Screen Orientation", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
+                            Text("Widescreen (16:9) vs Mobile (9:16)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                         }
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -546,7 +558,9 @@ fun SettingsScreen(
                                     label = { Text(orient, fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = TealPrimary,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
                             }
@@ -625,8 +639,8 @@ fun SettingsScreen(
                     // Live Battery Status & Saver Active Pill
                     Surface(
                         shape = RoundedCornerShape(14.dp),
-                        color = if (batterySaverConfig.isBatterySaverActive) AccentOrange.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                        border = if (batterySaverConfig.isBatterySaverActive) androidx.compose.foundation.BorderStroke(1.dp, AccentOrange) else null,
+                        color = if (batterySaverConfig.isBatterySaverActive) AccentOrange.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant,
+                        border = if (batterySaverConfig.isBatterySaverActive) BorderStroke(1.dp, AccentOrange) else null,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -662,7 +676,7 @@ fun SettingsScreen(
                                         Text(
                                             text = " • Simulated",
                                             fontSize = 11.sp,
-                                            color = Color.Gray
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -683,11 +697,11 @@ fun SettingsScreen(
                                 } else {
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
-                                        color = if (batterySaverConfig.isEnabled) TealDark else Color.Gray.copy(alpha = 0.3f)
+                                        color = if (batterySaverConfig.isEnabled) TealDark else MaterialTheme.colorScheme.surfaceVariant
                                     ) {
                                         Text(
                                             text = if (batterySaverConfig.isEnabled) "ARMED (<${batterySaverConfig.thresholdPercent}%)" else "OFF",
-                                            color = if (batterySaverConfig.isEnabled) TealPrimary else Color.Gray,
+                                            color = if (batterySaverConfig.isEnabled) TealPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -704,7 +718,7 @@ fun SettingsScreen(
                                     .height(6.dp)
                                     .clip(RoundedCornerShape(3.dp)),
                                 color = if (batteryState.levelPercent <= batterySaverConfig.thresholdPercent) AccentOrange else Color(0xFF00E676),
-                                trackColor = Color(0xFF334155)
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
                             )
                         }
                     }
@@ -733,8 +747,10 @@ fun SettingsScreen(
                                             )
                                         },
                                         colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = TealDark,
-                                            selectedLabelColor = TealPrimary
+                                            selectedContainerColor = TealPrimary,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            labelColor = MaterialTheme.colorScheme.onSurface
                                         ),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -763,8 +779,10 @@ fun SettingsScreen(
                                         onClick = { viewModel.setBatterySaverTargetPreset(preset) },
                                         label = { Text(label, fontSize = 11.sp) },
                                         colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = TealDark,
-                                            selectedLabelColor = TealPrimary
+                                            selectedContainerColor = TealPrimary,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            labelColor = MaterialTheme.colorScheme.onSurface
                                         ),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -793,8 +811,10 @@ fun SettingsScreen(
                                         onClick = { viewModel.setBatterySaverTargetFramerate(fps) },
                                         label = { Text(label, fontSize = 11.sp) },
                                         colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = TealDark,
-                                            selectedLabelColor = TealPrimary
+                                            selectedContainerColor = TealPrimary,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            labelColor = MaterialTheme.colorScheme.onSurface
                                         ),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -836,12 +856,12 @@ fun SettingsScreen(
                                 text = "🧪 Battery Simulator & Testing",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Gray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = "Test low battery downscaling without draining physical device battery:",
                                 fontSize = 11.sp,
-                                color = Color.Gray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
                             Row(
@@ -889,11 +909,11 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Countdown Timer Animation", fontWeight = FontWeight.Bold, color = Color.White)
-                    Text("Animated numbers countdown before screen capture begins", color = Color.Gray, fontSize = 12.sp)
+                    Text("Countdown Timer Animation", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Animated numbers countdown before screen capture begins", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -905,7 +925,9 @@ fun SettingsScreen(
                                 label = { Text(label, fontSize = 12.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = TealPrimary,
-                                    selectedLabelColor = Color.White
+                                    selectedLabelColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -919,7 +941,7 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -929,12 +951,12 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Recording Limits & Auto-Stop", fontWeight = FontWeight.Bold, color = Color.White)
-                        Text("Configure maximum recording duration or file size thresholds", color = Color.Gray, fontSize = 12.sp)
+                        Text("Recording Limits & Auto-Stop", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Configure maximum recording duration or file size thresholds", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     }
 
                     Button(
-                        onClick = { viewModel.navigateTo(com.morteza.screen.model.AppScreen.LIMITS) },
+                        onClick = { viewModel.navigateTo(AppScreen.LIMITS) },
                         colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
                         shape = RoundedCornerShape(10.dp)
                     ) {
@@ -1112,8 +1134,10 @@ fun SettingsScreen(
                                     onClick = { viewModel.setAudioSampleRate(44100) },
                                     label = { Text("44.1 kHz Standard", fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = TealDark,
-                                        selectedLabelColor = TealPrimary
+                                        selectedContainerColor = TealPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
 
@@ -1122,8 +1146,10 @@ fun SettingsScreen(
                                     onClick = { viewModel.setAudioSampleRate(48000) },
                                     label = { Text("48.0 kHz Studio", fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = TealDark,
-                                        selectedLabelColor = TealPrimary
+                                        selectedContainerColor = TealPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
                             }
@@ -1137,8 +1163,10 @@ fun SettingsScreen(
                                     onClick = { viewModel.setAudioChannels(2) },
                                     label = { Text("Stereo (2 Channels)", fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = TealDark,
-                                        selectedLabelColor = TealPrimary
+                                        selectedContainerColor = TealPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
 
@@ -1147,8 +1175,10 @@ fun SettingsScreen(
                                     onClick = { viewModel.setAudioChannels(1) },
                                     label = { Text("Mono (1 Channel)", fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = TealDark,
-                                        selectedLabelColor = TealPrimary
+                                        selectedContainerColor = TealPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
                             }
@@ -1163,7 +1193,7 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -1173,8 +1203,8 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Bitmap Overlay Video Processor", fontWeight = FontWeight.Bold, color = Color.White)
-                        Text("GL-based canvas timestamp & logo badge on video frames", color = Color.Gray, fontSize = 12.sp)
+                        Text("Bitmap Overlay Video Processor", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Text("GL-based canvas timestamp & logo badge on video frames", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     }
 
                     Switch(
@@ -1191,7 +1221,7 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -1201,8 +1231,8 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Floating Action Circular Menu", fontWeight = FontWeight.Bold, color = Color.White)
-                        Text("Always-on-top draggable floating action button", color = Color.Gray, fontSize = 12.sp)
+                        Text("Floating Action Circular Menu", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Always-on-top draggable floating action button", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     }
 
                     Switch(
@@ -1219,7 +1249,7 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -1242,8 +1272,8 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("Visual Touch Indicator (Show Taps)", fontWeight = FontWeight.Bold, color = Color.White)
-                                Text("Display animated ripples at touch points while recording", color = Color.Gray, fontSize = 11.sp)
+                                Text("Visual Touch Indicator (Show Taps)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Display animated ripples at touch points while recording", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                             }
                         }
 
@@ -1255,9 +1285,9 @@ fun SettingsScreen(
                     }
 
                     if (showTouchesEnabled) {
-                        HorizontalDivider(color = Color(0xFF334155))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
-                        Text("Indicator Color:", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Indicator Color:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
 
                         val colors = listOf("Teal", "White", "Cyan", "Amber", "Red")
                         Row(
@@ -1271,7 +1301,9 @@ fun SettingsScreen(
                                     label = { Text(cName, fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = TealPrimary,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
                             }
@@ -1286,7 +1318,7 @@ fun SettingsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -1310,8 +1342,8 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("Auto-Delete Old Recordings", fontWeight = FontWeight.Bold, color = Color.White)
-                                Text("Automatically delete files after set number of days", color = Color.Gray, fontSize = 11.sp)
+                                Text("Auto-Delete Old Recordings", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Automatically delete files after set number of days", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                             }
                         }
 
@@ -1325,14 +1357,14 @@ fun SettingsScreen(
                     }
 
                     if (autoCleanupConfig.autoDeleteEnabled) {
-                        HorizontalDivider(color = Color(0xFF334155))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Retention Period:", color = Color.LightGray, fontSize = 13.sp)
+                            Text("Retention Period:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                             Text(
                                 text = "${autoCleanupConfig.retentionDays} Days",
                                 fontWeight = FontWeight.Black,
@@ -1356,7 +1388,9 @@ fun SettingsScreen(
                                     label = { Text("${days}d", fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = AccentRed,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = Color.White,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
                             }
@@ -1373,7 +1407,7 @@ fun SettingsScreen(
                             colors = SliderDefaults.colors(
                                 thumbColor = AccentRed,
                                 activeTrackColor = AccentRed,
-                                inactiveTrackColor = Color.DarkGray
+                                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
                             )
                         )
 
@@ -1384,8 +1418,8 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Protect Starred Recordings", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
-                                Text("Never auto-delete recordings marked with a star", color = Color.Gray, fontSize = 11.sp)
+                                Text("Protect Starred Recordings", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
+                                Text("Never auto-delete recordings marked with a star", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                             }
                             Switch(
                                 checked = autoCleanupConfig.protectStarredVideos,
@@ -1404,7 +1438,7 @@ fun SettingsScreen(
                         val reclaimMB = eligibleToDelete.sumOf { it.sizeBytes } / (1024 * 1024)
 
                         Surface(
-                            color = Color(0xFF0F172A),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -1417,7 +1451,7 @@ fun SettingsScreen(
                                     Text(
                                         text = "${eligibleToDelete.size} recording(s) older than ${autoCleanupConfig.retentionDays}d",
                                         fontWeight = FontWeight.SemiBold,
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         fontSize = 12.sp
                                     )
                                     Text(
@@ -1439,7 +1473,7 @@ fun SettingsScreen(
                         }
                     }
 
-                    HorizontalDivider(color = Color(0xFF334155))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
                     // Manual Bulk Clear
                     Row(
@@ -1448,9 +1482,9 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Total Stored Recordings: ${videos.size}", color = Color.LightGray, fontSize = 12.sp)
+                            Text("Total Stored Recordings: ${videos.size}", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
                             val totalMB = videos.sumOf { it.sizeBytes } / (1024 * 1024)
-                            Text("Total disk usage: ~$totalMB MB", color = Color.Gray, fontSize = 11.sp)
+                            Text("Total disk usage: ~$totalMB MB", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                         }
 
                         OutlinedButton(
@@ -1504,7 +1538,7 @@ private fun AudioSourceItem(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -1523,12 +1557,12 @@ private fun AudioSourceItem(
                         Spacer(modifier = Modifier.width(6.dp))
                         Surface(
                             shape = RoundedCornerShape(4.dp),
-                            color = Color(0xFF00E5FF).copy(alpha = 0.15f)
+                            color = TealPrimary.copy(alpha = 0.15f)
                         ) {
                             Text(
                                 text = tag,
                                 fontSize = 9.sp,
-                                color = Color(0xFF00E5FF),
+                                color = TealPrimary,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                             )
@@ -1556,3 +1590,10 @@ private fun AudioSourceItem(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    ScreenTheme(darkTheme = true) {
+        SettingsScreen(viewModel = viewModel())
+    }
+}

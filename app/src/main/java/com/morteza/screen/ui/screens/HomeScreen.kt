@@ -16,13 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.morteza.screen.model.AppScreen
 import com.morteza.screen.model.AudioSourceOption
 import com.morteza.screen.model.RecordingStatus
 import com.morteza.screen.ui.theme.AccentOrange
 import com.morteza.screen.ui.theme.AccentRed
+import com.morteza.screen.ui.theme.ScreenTheme
 import com.morteza.screen.ui.theme.TealDark
 import com.morteza.screen.ui.theme.TealPrimary
 import com.morteza.screen.viewmodel.ScreenRecorderViewModel
@@ -625,5 +628,13 @@ private fun QuickChip(
             Text(text = label, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
             Text(text = sub, color = Color.Gray, fontSize = 10.sp)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    ScreenTheme(darkTheme = true) {
+        HomeScreen(viewModel = viewModel())
     }
 }
