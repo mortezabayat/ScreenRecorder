@@ -43,6 +43,8 @@ fun SettingsScreen(
     val videos by viewModel.videos.collectAsState()
     val storageFolder by viewModel.storageFolder.collectAsState()
     val autoCleanupConfig by viewModel.autoCleanupConfig.collectAsState()
+    val batterySaverConfig by viewModel.batterySaverConfig.collectAsState()
+    val batteryState by viewModel.batteryState.collectAsState()
     val showTouchesEnabled by viewModel.showTouchesEnabled.collectAsState()
     val touchColor by viewModel.touchColor.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
@@ -547,6 +549,334 @@ fun SettingsScreen(
                                         selectedLabelColor = Color.White
                                     )
                                 )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Battery-Saver Auto-Downscale Mode
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Header & Master Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            val batteryIcon = when {
+                                batteryState.isCharging -> Icons.Default.BatteryChargingFull
+                                batteryState.levelPercent <= batterySaverConfig.thresholdPercent -> Icons.Default.BatteryAlert
+                                else -> Icons.Default.BatteryStd
+                            }
+                            val batteryTint = when {
+                                batteryState.isCharging -> Color(0xFF00E676)
+                                batteryState.levelPercent <= batterySaverConfig.thresholdPercent -> AccentOrange
+                                else -> TealPrimary
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(batteryTint.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(batteryIcon, contentDescription = null, tint = batteryTint)
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column {
+                                Text(
+                                    text = "Battery-Saver Downscale",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Auto-lowers resolution & FPS when battery < 15%",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Switch(
+                            checked = batterySaverConfig.isEnabled,
+                            onCheckedChange = { viewModel.setBatterySaverEnabled(it) },
+                            colors = SwitchDefaults.colors(checkedThumbColor = TealPrimary)
+                        )
+                    }
+
+                    // Live Battery Status & Saver Active Pill
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (batterySaverConfig.isBatterySaverActive) AccentOrange.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        border = if (batterySaverConfig.isBatterySaverActive) androidx.compose.foundation.BorderStroke(1.dp, AccentOrange) else null,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Current Battery: ",
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "${batteryState.levelPercent}%",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = if (batteryState.levelPercent <= batterySaverConfig.thresholdPercent) AccentOrange else Color(0xFF00E676)
+                                    )
+                                    if (batteryState.isCharging) {
+                                        Text(
+                                            text = " (Charging)",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF00E676)
+                                        )
+                                    }
+                                    if (batteryState.isSimulated) {
+                                        Text(
+                                            text = " • Simulated",
+                                            fontSize = 11.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+
+                                if (batterySaverConfig.isBatterySaverActive) {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = AccentOrange
+                                    ) {
+                                        Text(
+                                            text = "THROTTLED: ${batterySaverConfig.targetResolutionPreset} • ${batterySaverConfig.targetFramerate}FPS",
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                } else {
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = if (batterySaverConfig.isEnabled) TealDark else Color.Gray.copy(alpha = 0.3f)
+                                    ) {
+                                        Text(
+                                            text = if (batterySaverConfig.isEnabled) "ARMED (<${batterySaverConfig.thresholdPercent}%)" else "OFF",
+                                            color = if (batterySaverConfig.isEnabled) TealPrimary else Color.Gray,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Linear indicator
+                            LinearProgressIndicator(
+                                progress = { (batteryState.levelPercent / 100f).coerceIn(0f, 1f) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = if (batteryState.levelPercent <= batterySaverConfig.thresholdPercent) AccentOrange else Color(0xFF00E676),
+                                trackColor = Color(0xFF334155)
+                            )
+                        }
+                    }
+
+                    if (batterySaverConfig.isEnabled) {
+                        // Threshold selector chips
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "Trigger Threshold",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(10, 15, 20, 25).forEach { pct ->
+                                    FilterChip(
+                                        selected = batterySaverConfig.thresholdPercent == pct,
+                                        onClick = { viewModel.setBatterySaverThreshold(pct) },
+                                        label = {
+                                            Text(
+                                                text = if (pct == 15) "$pct% (Default)" else "$pct%",
+                                                fontSize = 11.sp
+                                            )
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = TealDark,
+                                            selectedLabelColor = TealPrimary
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Target downscaled resolution preset
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "Battery-Saver Target Resolution",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    "480p" to "480p SD (Max Savings)",
+                                    "720p" to "720p HD (Balanced)"
+                                ).forEach { (preset, label) ->
+                                    FilterChip(
+                                        selected = batterySaverConfig.targetResolutionPreset == preset,
+                                        onClick = { viewModel.setBatterySaverTargetPreset(preset) },
+                                        label = { Text(label, fontSize = 11.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = TealDark,
+                                            selectedLabelColor = TealPrimary
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Target downscaled framerate
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "Battery-Saver Target Framerate",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    30 to "30 FPS Standard",
+                                    24 to "24 FPS Ultra-Eco"
+                                ).forEach { (fps, label) ->
+                                    FilterChip(
+                                        selected = batterySaverConfig.targetFramerate == fps,
+                                        onClick = { viewModel.setBatterySaverTargetFramerate(fps) },
+                                        label = { Text(label, fontSize = 11.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = TealDark,
+                                            selectedLabelColor = TealPrimary
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Critical Auto-Stop Toggle
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Auto-Stop at Critical Battery (≤5%)",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Safely saves video before phone completely powers off",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = batterySaverConfig.autoStopAtCritical,
+                                onCheckedChange = { viewModel.setBatterySaverAutoStopAtCritical(it) },
+                                colors = SwitchDefaults.colors(checkedThumbColor = AccentOrange)
+                            )
+                        }
+
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+
+                        // Simulator / Tester Controls
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "🧪 Battery Simulator & Testing",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = "Test low battery downscaling without draining physical device battery:",
+                                fontSize = 11.sp,
+                                color = Color.Gray
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { viewModel.setSimulatedBattery(12, isCharging = false) },
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentOrange),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Simulate 12%", fontSize = 10.sp)
+                                }
+
+                                OutlinedButton(
+                                    onClick = { viewModel.setSimulatedBattery(85, isCharging = false) },
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF00E676)),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Normal 85%", fontSize = 10.sp)
+                                }
+
+                                OutlinedButton(
+                                    onClick = { viewModel.setSimulatedBattery(45, isCharging = true) },
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TealPrimary),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Charging", fontSize = 10.sp)
+                                }
                             }
                         }
                     }

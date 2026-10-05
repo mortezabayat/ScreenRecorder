@@ -75,6 +75,23 @@ data class AutoCleanupConfig(
     val protectStarredVideos: Boolean = true
 )
 
+data class BatterySaverConfig(
+    val isEnabled: Boolean = true,
+    val thresholdPercent: Int = 15,
+    val targetResolutionPreset: String = "480p",
+    val targetFramerate: Int = 30,
+    val autoStopAtCritical: Boolean = true,
+    val criticalThresholdPercent: Int = 5,
+    val isBatterySaverActive: Boolean = false
+)
+
+data class BatteryState(
+    val levelPercent: Int = 82,
+    val isCharging: Boolean = false,
+    val isLowBattery: Boolean = false,
+    val isSimulated: Boolean = false
+)
+
 enum class AppScreen(val title: String) {
     HOME("Screen"),
     GALLERY("Gallery"),

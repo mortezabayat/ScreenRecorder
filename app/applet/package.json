@@ -1,0 +1,19 @@
+{
+  "name": "screen-recorder",
+  "version": "1.0.0",
+  "description": "Android Screen Recorder with Jetpack Compose, Background Recording Service, Audio Source Selection, and Battery-Saver Mode",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "./gradlew assembleDebug"
+  },
+  "keywords": [
+    "android",
+    "screen-recorder",
+    "jetpack-compose",
+    "media-projection"
+  ],
+  "author": "Screen Recorder Team",
+  "license": "Apache-2.0"
+}
