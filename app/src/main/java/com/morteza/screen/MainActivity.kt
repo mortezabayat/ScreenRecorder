@@ -150,8 +150,6 @@ class MainActivity : ComponentActivity() {
                 val toastMessage by viewModel.toastMessage.collectAsState()
                 val selectedVideo by viewModel.selectedVideoForPreview.collectAsState()
                 val isPainterActive by viewModel.isPainterActive.collectAsState()
-                val videoConfig by viewModel.videoConfig.collectAsState()
-                val audioConfig by viewModel.audioConfig.collectAsState()
 
                 val isRecording = recordingStatus == RecordingStatus.RECORDING || recordingStatus == RecordingStatus.PAUSED
 
@@ -202,14 +200,14 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(recordingStatus) {
                     when (recordingStatus) {
                         RecordingStatus.RECORDING -> {
-                            if (!ScreenRecordService.isServiceRunning) {
-                                ScreenRecordService.start(this@MainActivity, specs = "${videoConfig.resolution} • ${videoConfig.framerate}fps • ${audioConfig.audioSource.shortLabel}")
-                            } else if (ScreenRecordService.isRecordingPaused) {
+                            if (ScreenRecordService.isServiceRunning && ScreenRecordService.isRecordingPaused) {
                                 ScreenRecordService.resume(this@MainActivity)
                             }
                         }
                         RecordingStatus.PAUSED -> {
-                            ScreenRecordService.pause(this@MainActivity)
+                            if (ScreenRecordService.isServiceRunning && !ScreenRecordService.isRecordingPaused) {
+                                ScreenRecordService.pause(this@MainActivity)
+                            }
                         }
                         RecordingStatus.IDLE -> {
                             if (ScreenRecordService.isServiceRunning) {

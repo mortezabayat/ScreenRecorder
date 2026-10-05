@@ -136,14 +136,6 @@ class ScreenRecordService : Service() {
 
         when (action) {
             ACTION_START -> {
-                isServiceRunning = true
-                isRecordingPaused = false
-                currentSeconds = 0L
-                currentSpecs = intent.getStringExtra(EXTRA_SPECS) ?: "1080p • 30fps"
-
-                val notification = buildRecordingNotification(currentSeconds, isPaused = false)
-                startForegroundCompat(notification)
-
                 val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, Activity.RESULT_CANCELED)
                 val resultData: Intent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(EXTRA_RESULT_DATA, Intent::class.java)
@@ -159,7 +151,17 @@ class ScreenRecordService : Service() {
                 val framerate = intent.getIntExtra(EXTRA_FRAMERATE, 30)
                 val includeAudio = intent.getBooleanExtra(EXTRA_INCLUDE_AUDIO, true)
 
-                if (resultCode == Activity.RESULT_OK && resultData != null && outputPath.isNotEmpty()) {
+                val hasProjectionData = resultCode == Activity.RESULT_OK && resultData != null && outputPath.isNotEmpty()
+
+                isServiceRunning = true
+                isRecordingPaused = false
+                currentSeconds = 0L
+                currentSpecs = intent.getStringExtra(EXTRA_SPECS) ?: "1080p • 30fps"
+
+                val notification = buildRecordingNotification(currentSeconds, isPaused = false)
+                startForegroundCompat(notification, hasMediaProjection = hasProjectionData)
+
+                if (hasProjectionData) {
                     startRecordingSession(resultCode, resultData, outputPath, width, height, bitrate, framerate, includeAudio)
                 }
             }
@@ -395,10 +397,13 @@ class ScreenRecordService : Service() {
         manager?.notify(NOTIFICATION_ID, buildRecordingNotification(seconds, isPaused))
     }
 
-    private fun startForegroundCompat(notification: Notification) {
+    private fun startForegroundCompat(notification: Notification, hasMediaProjection: Boolean = false) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
-                var fgsTypes = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                var fgsTypes = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                if (hasMediaProjection) {
+                    fgsTypes = fgsTypes or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     fgsTypes = fgsTypes or ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
                 }
@@ -408,7 +413,8 @@ class ScreenRecordService : Service() {
                     notification,
                     fgsTypes
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                e.printStackTrace()
                 try {
                     ServiceCompat.startForeground(
                         this,
