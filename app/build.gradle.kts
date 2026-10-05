@@ -52,7 +52,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     // Media3 / ExoPlayer for video previews
-    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-exoplayer:1.11.1")
     implementation("androidx.media3:media3-ui:1.5.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
